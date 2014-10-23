@@ -27,7 +27,7 @@ $CLANG -emit-llvm -O0 -g -c $PROG_NAME.c -o $PROG_NAME.bc
 ################
 # Link Program
 ################
-USEDLIBS=Polly.a
+#USEDLIBS=Polly.a
 $LLVM_LINK -o $PROG_NEW_NAME.bc $PROG_NAME.bc
 
 ###################
@@ -37,7 +37,7 @@ export PROG_NAME=$PROG_NEW_NAME
 $OPT -mem2reg $PROG_NAME.bc -o $PROG_NAME.opt
 mv $PROG_NAME.opt $PROG_NAME.bc
 $LLVM_DIS -f $PROG_NAME.bc -o $PROG_NAME.ll
-$OPT -load $PASS $PROG_NAME.bc -o $PROG_NAME-optimized.bc
+$OPT -load $HOME/usr/lib/libLLVMPolly.so -load $PASS $PASS_FLAG $PROG_NAME.bc -o $PROG_NAME-optimized.bc
 $LLVM_DIS -f $PROG_NAME-optimized.bc -o $PROG_NAME-optimized.ll
 $LLC $PROG_NAME-optimized.bc
 $CLANG $PROG_NAME-optimized.s -O0 -o $PROG_NAME 
