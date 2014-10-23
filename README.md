@@ -1,2 +1,42 @@
-Archer
-======
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Introduction</a></li>
+<li><a href="#sec-2">2. Installation</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Building</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Configuration</a></li>
+<li><a href="#sec-4">4. Usage</a></li>
+<li><a href="#sec-5">5. Copyright</a></li>
+</ul>
+</div>
+</div>
+
+# Introduction
+
+# Installation
+
+**Archer** has been developed under LLVM 3.5 with OpenMP support (for
+more information go to <http://clang-omp.github.io>).
+
+## Building
+
+First obtain **Archer**, e.g. from Github:
+
+    mkdir llvm35omp
+    cd llvm35omp
+    git clone git@github.com:soarlab/llvm35omp_tsanbl.git llvm_src
+
+Then change directory and build **Archer** by running `install.sh`:
+
+    cd llvm_src
+    ./install.sh
+
+# Configuration
+
+# Usage
+
+# Copyright
