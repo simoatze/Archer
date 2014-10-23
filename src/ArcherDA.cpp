@@ -71,6 +71,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const
     {
+      ScopPass::getAnalysisUsage(AU);                                   AU.addRequired<Dependences>();
     }
 
     std::string getBlacklistScop(polly::Scop &Scop) {
