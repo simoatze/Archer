@@ -1,7 +1,7 @@
 include ../Makefile.config
 
 PROG		= libArcher.so
-SRC_FILES	= ArcherStaticAnalysis.cpp
+SRC_FILES	= ArcherDA.cpp
 
 O_FILES		= $(SRC_FILES:%.cpp=%.o)
 
