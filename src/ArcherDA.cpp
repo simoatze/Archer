@@ -69,9 +69,10 @@ namespace {
 
     ArcherDA() : ScopPass(ID) {}
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const
+    void getAnalysisUsage(AnalysisUsage &AU) const
     {
-      ScopPass::getAnalysisUsage(AU);                                   AU.addRequired<Dependences>();
+      ScopPass::getAnalysisUsage(AU);
+      AU.addRequired<Dependences>();
     }
 
     std::string getBlacklistScop(polly::Scop &Scop) {
@@ -114,7 +115,11 @@ namespace {
       return(content);
     }
 
-    virtual bool runOnScop(Scop &Scop)
+    void releaseMemory() {
+      
+    }
+
+    bool runOnScop(Scop &Scop)
     {
       //polly::Scop *S = &Scop;
       Dependences *D = &getAnalysis<Dependences>();

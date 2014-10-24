@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rm -f *.ll *.bc *.s data_race01_all
+rm -f *.ll *.bc *.s data-race01_all
