@@ -211,6 +211,8 @@ diff -rupN a/lib/Transforms/Instrumentation/ThreadSanitizer.cpp b/lib/Transforms
 +  if (getenv("TSAN_BLACKLIST_LINE") != NULL) {
 +    makeInstructionsList(AllLoadsAndStores);
 +    makeInstructionsList(AtomicAccesses);
++    // Try to understand what they are doing
++    // makeInstructionsList(MemIntrinCalls);
 +  }
 +#endif // ARCHER
 +

@@ -9,19 +9,62 @@ else
     PROCS=`expr $PROCS + 1`    
 fi
 
-LLVM_SRC=`pwd`
+WORKING_DIR=`pwd`
+
 cd ..
-INSTALL_DIR=${HOME}
-BASE=`pwd`
-LLVM_BUILD=${BASE}/llvm_build
-LLVM_DEP=${LLVM_BUILD}/dependencies
-POLLY_SRC=${LLVM_SRC}/tools/polly
-CLOOG_SRC=${LLVM_DEP}/cloog_src
-#CLOOG_INSTALL=${LLVM_DEP}/cloog_install
-CLOOG_INSTALL=${INSTALL_DIR}/usr
 
 # LLVM installation directory
-LLVM_INSTALL=${INSTALL_DIR}/usr
+LLVM_INSTALL=${HOME}/usr # --prefix
+BASE=`pwd`
+LLVM_SRC=${BASE}/llvm_src
+CLANG_SRC=${BASE}/llvm_src/tools/clang
+LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
+POLLY_SRC=${LLVM_SRC}/tools/polly
+CLOOG_SRC=${LLVM_DEP}/cloog_src
+INTELOMPRT=${BASE}/intelomprt
+LLVM_BUILD=${BASE}/llvm_build
+LLVM_DEP=${LLVM_BUILD}/dependencies
+CLOOG_INSTALL=${INSTALL_DIR}/usr
+
+# Obtaining the sources
+
+# LLVM Sources
+echo "Obtaining LLVM OpenMP..."
+git clone https://github.com/clang-omp/llvm ${LLVM_SRC}
+
+# Clang Sources
+echo "Obtaining LLVM/Clang OpenMP..."
+git clone -b clang-omp https://github.com/clang-omp/clang llvm/tools/clang ${CLANG_SRC}
+
+# Runtime Sources
+echo "Obtaining LLVM OpenMP Runtime..."
+git clone https://github.com/clang-omp/compiler-rt llvm/projects/compiler-rt ${LLVMRT_SRC}
+
+# Polly Sources
+echo "Obtaining Polly..."
+git clone http://llvm.org/git/polly.git ${POLLY_SRC}
+
+# Intel OpenMP Runtime Sources
+# echo "Obtaining Intel OpenMP Runtime..."
+# wget https://www.openmprtl.org/sites/default/files/libomp_20140926_oss.tgz
+
+# Applying the Patches
+
+# LLVM Patch
+cd ${LLVM_SRC}
+patch -p 1 < ../Archer/patches/llvm.patch
+
+# Clang Patch
+cd ${CLANG_SRC}
+patch -p 1 < ../Archer/patches/clang.patch
+
+# # Polly Patch
+# cd ${POLLY_SRC}
+# patch -p 1 < ../Archer/patches/polly.patch
+
+# # Intel OpenMP Runtime Patch
+# cd ${INTELOMPRT}
+# # patch -p 1 < ../Archer/patches/intelomprt.patch
 
 # Compiling and installing Cloog (dependency for Polly)
 ${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
