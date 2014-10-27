@@ -102,7 +102,7 @@ namespace {
 	    llvm::raw_string_ostream rso(str);
 	    BI->print(rso);
 
-	    std::string string = "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "," + str + "\n";
+	    std::string string = "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
 	    if(content.find(string) == std::string::npos) {
 	      content += string;
 	      DEBUG(dbgs() << content << "\n");
@@ -121,24 +121,32 @@ namespace {
 
     bool runOnScop(Scop &Scop)
     {
+      printf("Entro qui\n\n");
       //polly::Scop *S = &Scop;
       Dependences *D = &getAnalysis<Dependences>();
 
-      if (!D->hasValidDependences()) {
-	errs() << "Exiting...\n";
-	return false;
-      }
+      // __isl_keep isl_union_map *RAW = D->getDependences(Dependences::TYPE_RAW);
+      // __isl_keep isl_union_map *WAR = D->getDependences(Dependences::TYPE_WAR);
+      // __isl_keep isl_union_map *WAW = D->getDependences(Dependences::TYPE_WAW);
+      // __isl_keep isl_union_map *RED = D->getDependences(Dependences::TYPE_RED);
+      // __isl_keep isl_union_map *TCRED = D->getDependences(Dependences::TYPE_TC_RED);
+
+      // if ((RAW != nullptr) || (WAR != nullptr) || (WAW != nullptr) || (RED != nullptr) || (TCRED != nullptr)) {
+      // 	DEBUG(dbgs() << "Exiting...\n");
+      // 	isl_union_map_free(RAW);
+      // 	isl_union_map_free(WAR);
+      // 	isl_union_map_free(WAW);
+      // 	isl_union_map_free(RED);
+      // 	isl_union_map_free(TCRED);
+      // 	return false;
+      // }
 
       std::string FileName = "tsan_blacklist.txt"; //ImportDir + "/" + getFileName(S);
 
       std::string fileContent = getBlacklistScop(Scop);
 
-      // int dependencyKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
-      // __isl_keep isl_union_map *Deps = D->getDependences(dependencyKinds);
-
       dbgs() << "Dependences:\n";
       D->printScop(dbgs());
-      //isl_union_map_free(Deps);
 
       std::string ErrInfo;
       tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
@@ -146,17 +154,17 @@ namespace {
       if (ErrInfo.empty()) {
 	F.os() << fileContent;
 	F.os().close();
-	return true;
 	if (!F.os().has_error()) {
 	  errs() << "\n";
 	  F.keep();
 	  return false;
 	}
+      } else {    
+	errs() << "  error opening file for writing!\n";
+	F.os().clear_error();
+	return false;
       }
-    
-      errs() << "  error opening file for writing!\n";
-      F.os().clear_error();
-      return false;
+      return true;
     }
   };
 
