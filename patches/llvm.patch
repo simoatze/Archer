@@ -1,0 +1,316 @@
+diff -rupN a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2014-10-26 20:48:21.000000000 -0600
++++ b/CMakeLists.txt	2014-10-22 14:54:30.000000000 -0600
+@@ -157,6 +157,9 @@ set(LLVM_TARGETS_TO_BUILD "all"
+ set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD ""
+   CACHE STRING "Semicolon-separated list of experimental targets to build.")
+ 
++# ARCHER
++add_definitions(-DARCHER)
++
+ option(BUILD_SHARED_LIBS
+   "Build all libraries as shared libraries instead of static" OFF)
+ 
+diff -rupN a/include/llvm/Support/SpecialCaseList.h b/include/llvm/Support/SpecialCaseList.h
+--- a/include/llvm/Support/SpecialCaseList.h	2014-10-26 20:48:21.000000000 -0600
++++ b/include/llvm/Support/SpecialCaseList.h	2014-10-22 14:54:30.000000000 -0600
+@@ -50,6 +50,10 @@
+ 
+ #include "llvm/ADT/StringMap.h"
+ 
++#ifdef ARCHER
++#include <vector>
++#endif // ARCHER
++
+ namespace llvm {
+ class MemoryBuffer;
+ class Regex;
+@@ -78,6 +82,8 @@ class SpecialCaseList {
+   bool inSection(const StringRef Section, const StringRef Query,
+                  const StringRef Category = StringRef()) const;
+ 
++  bool inSection(const unsigned Line, const StringRef File, const StringRef Dir) const;
++
+  private:
+   SpecialCaseList(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
+   SpecialCaseList &operator=(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
+@@ -85,6 +91,12 @@ class SpecialCaseList {
+   struct Entry;
+   StringMap<StringMap<Entry> > Entries;
+ 
++#ifdef ARCHER
++  std::vector<bool> lineEntries;
++  std::string filename;
++  std::string directory;
++#endif // ARCHER
++
+   SpecialCaseList();
+   /// Parses just-constructed SpecialCaseList entries from a memory buffer.
+   bool parse(const MemoryBuffer *MB, std::string &Error);
+diff -rupN a/lib/Support/SpecialCaseList.cpp b/lib/Support/SpecialCaseList.cpp
+--- a/lib/Support/SpecialCaseList.cpp	2014-10-26 20:48:21.000000000 -0600
++++ b/lib/Support/SpecialCaseList.cpp	2014-10-22 14:54:31.000000000 -0600
+@@ -99,6 +99,58 @@ bool SpecialCaseList::parse(const Memory
+       return false;
+     }
+ 
++#ifdef ARCHER
++    if (Prefix == "line") {
++
++      std::pair<StringRef, StringRef> attributes1 =  SplitLine.second.split(",");
++      std::pair<StringRef, StringRef> attributes2 =  attributes1.second.split(",");
++
++      if (attributes1.second.empty()) {
++	// Case when the blacklist is for a specific source fille.
++	// We do not need to know the filename and directory.
++
++	filename = "none";
++	directory = "none";
++      } else {
++	// Case when the blacklist is total for all the source files.
++	// Filename and directory need to be specified.
++
++	if (attributes2.first.empty() || attributes2.second.empty()) {
++	  // Missing ',' in the line.
++	  Error = (Twine("Malformed line ") + Twine(LineNo) + ", '" +
++		   SplitLine.first + "'").str();
++	  return false;
++	}
++
++	if (filename.empty() || directory.empty()) {
++	  filename = attributes2.first;
++	  directory = attributes2.second;
++	}
++      }
++
++      std::pair<StringRef, StringRef> values = attributes1.first.split("-");
++      if (values.second.empty()) {
++        unsigned int line = std::atoi(values.first.str().c_str());
++
++        if(lineEntries.size() <= line && line > 0)
++          lineEntries.resize(line + 1);
++        lineEntries[line] = true;
++      } else {
++        if(values.first > values.second)
++          return false;
++        unsigned int line1 = std::atoi(values.first.str().c_str());
++        unsigned int line2 = std::atoi(values.second.str().c_str());
++
++        if(lineEntries.size() < line2)
++          lineEntries.resize(line2 + 1);
++        for(unsigned int i = line1; i <= line2; i++) {
++          lineEntries[i] = true;
++	}
++      }
++      continue;
++    }
++#endif // ARCHER
++
+     std::pair<StringRef, StringRef> SplitRegexp = SplitLine.second.split("=");
+     std::string Regexp = SplitRegexp.first;
+     StringRef Category = SplitRegexp.second;
+@@ -167,4 +219,16 @@ bool SpecialCaseList::inSection(const St
+   return II->getValue().match(Query);
+ }
+ 
++#ifdef ARCHER
++  bool SpecialCaseList::inSection(const unsigned Line, const StringRef File, const StringRef Dir) const {
++
++    if(lineEntries.size() == 0) return(false);
++
++    if(Line < lineEntries.size())
++      //return((!Dir.compare(directory) || Dir.empty()) && (File.compare(filename) || File.empty()) && lineEntries[Line]); 
++      return(lineEntries[Line]);
++    return false;
++  }
++#endif // ARCHER
++
+ }  // namespace llvm
+diff -rupN a/lib/Transforms/Instrumentation/ThreadSanitizer.cpp b/lib/Transforms/Instrumentation/ThreadSanitizer.cpp
+--- a/lib/Transforms/Instrumentation/ThreadSanitizer.cpp	2014-10-26 20:48:22.000000000 -0600
++++ b/lib/Transforms/Instrumentation/ThreadSanitizer.cpp	2014-10-22 14:54:31.000000000 -0600
+@@ -41,6 +41,13 @@
+ #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+ #include "llvm/Transforms/Utils/ModuleUtils.h"
+ 
++#ifdef ARCHER
++#include <sstream>
++#include "llvm/DebugInfo.h"
++#include "llvm/Support/FileSystem.h"
++#include "llvm/Support/ToolOutputFile.h"
++#endif // ARCHER
++
+ using namespace llvm;
+ 
+ #define DEBUG_TYPE "tsan"
+@@ -89,6 +96,11 @@ struct ThreadSanitizer : public Function
+   bool addrPointsToConstantData(Value *Addr);
+   int getMemoryAccessFuncIndex(Value *Addr);
+ 
++#ifdef ARCHER
++  void makeInstructionsList(SmallVectorImpl<Instruction*> &All);
++  void makeFunctionsList(Function &F, Instruction &I);
++#endif // ARCHER
++
+   const DataLayout *DL;
+   Type *IntptrTy;
+   IntegerType *OrdTy;
+@@ -325,6 +337,13 @@ bool ThreadSanitizer::runOnFunction(Func
+   // Traverse all instructions, collect loads/stores/returns, check for calls.
+   for (auto &BB : F) {
+     for (auto &Inst : BB) {
++
++#ifdef ARCHER
++      if(getenv("TSAN_BLACKLIST_FUN") != NULL) {
++	makeFunctionsList(F, Inst);
++      }
++#endif // ARCHER
++
+       if (isAtomic(&Inst))
+         AtomicAccesses.push_back(&Inst);
+       else if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst))
+@@ -348,19 +367,29 @@ bool ThreadSanitizer::runOnFunction(Func
+   // Instrument memory accesses only if we want to report bugs in the function.
+   if (ClInstrumentMemoryAccesses && SanitizeFunction)
+     for (auto Inst : AllLoadsAndStores) {
+-      Res |= instrumentLoadOrStore(Inst);
++
++#ifdef ARCHER
++      if (!Inst->getMetadata("archer.tsan.bl"))
++#endif // ARCHER
++	Res |= instrumentLoadOrStore(Inst);
+     }
+ 
+   // Instrument atomic memory accesses in any case (they can be used to
+   // implement synchronization).
+   if (ClInstrumentAtomics)
+     for (auto Inst : AtomicAccesses) {
+-      Res |= instrumentAtomic(Inst);
++#ifdef ARCHER
++      if (!Inst->getMetadata("archer.tsan.bl"))
++#endif // ARCHER
++	Res |= instrumentAtomic(Inst);
+     }
+ 
+   if (ClInstrumentMemIntrinsics && SanitizeFunction)
+     for (auto Inst : MemIntrinCalls) {
+-      Res |= instrumentMemIntrinsic(Inst);
++#ifdef ARCHER
++      if (!Inst->getMetadata("archer.tsan.bl"))
++#endif // ARCHER
++	Res |= instrumentMemIntrinsic(Inst);
+     }
+ 
+   // Instrument function entry/exit points if there were instrumented accesses.
+@@ -376,6 +405,16 @@ bool ThreadSanitizer::runOnFunction(Func
+     }
+     Res = true;
+   }
++
++#ifdef ARCHER
++  if (getenv("TSAN_BLACKLIST_LINE") != NULL) {
++    makeInstructionsList(AllLoadsAndStores);
++    makeInstructionsList(AtomicAccesses);
++  }
++#endif // ARCHER
++
+   return Res;
+ }
+ 
+@@ -564,3 +603,96 @@ int ThreadSanitizer::getMemoryAccessFunc
+   assert(Idx < kNumberOfAccessSizes);
+   return Idx;
+ }
++
++#ifdef ARCHER
++void ThreadSanitizer::makeInstructionsList(SmallVectorImpl<Instruction*> &All)
++{
++  std::string fileContent;
++  StringRef File = "";
++
++  for (SmallVectorImpl<Instruction*>::reverse_iterator It = All.rbegin(), E = All.rend(); It != E; ++It) {
++    Instruction *I = *It;
++
++    if (MDNode *N = I->getMetadata("dbg")) {
++      DILocation Loc(N);
++      unsigned Line = Loc.getLineNumber();
++      File = Loc.getFilename();
++      StringRef Dir = Loc.getDirectory();
++
++      std::stringstream line;
++      line << Line;
++      std::string string = "line:" + line.str() + "," + File.str() + "," + Dir.str() + "\n";
++      if(fileContent.find(string) == std::string::npos) {
++	fileContent += string;
++	DEBUG(dbgs() << fileContent << "\n");
++      }
++
++      std::stringstream function;
++      function << I->getParent()->getParent()->getName().str();
++      string = "function:" + function.str() + "*," + File.str() + "," + Dir.str() + "\n";
++    }
++  }
++
++  if(!File.empty()) {
++    std::string FileName = "/tmp/blacklist.bl";
++
++    std::string ErrInfo;
++    tool_output_file F(FileName.c_str(), ErrInfo, sys::fs::F_Append);
++
++    if (ErrInfo.empty()) {
++      F.os() << fileContent;
++      F.os().close();
++      if (!F.os().has_error()) {
++	F.keep();
++      } else {
++	errs() << "ThreadSanitizer::makeInstructionsList - error opening file for writing!(1)\n";
++	F.os().clear_error();
++      }
++    } else {
++      errs() << "ThreadSanitizer::makeInstructionsList - error opening file for writing!(2)\n";
++      F.os().clear_error();
++    }
++  }
++}
++
++void ThreadSanitizer::makeFunctionsList(Function &F, Instruction &I)
++{
++  std::string fileContent;
++
++  std::string file;
++  std::string directory;
++
++  if (MDNode *N = I.getMetadata("dbg")) {
++      DILocation Loc(N);
++      file = Loc.getFilename();
++      directory = Loc.getDirectory();
++
++      std::string string = "fun:*" + F.getName().str() + "*," + file + "," + directory + "\n";
++      if(fileContent.find(string) == std::string::npos) {
++	fileContent += string;
++	DEBUG(dbgs() << fileContent << "\n");
++      }
++
++      std::string FileName = "/tmp/blacklist.bl";
++
++      std::string ErrInfo;
++      tool_output_file File(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
++
++      if (ErrInfo.empty()) {
++	File.os() << fileContent;
++	File.os().close();
++	if (!File.os().has_error()) {
++	  File.keep();
++	} else {
++	  errs() << "ThreadSanitizer::makeFunctionsList - error opening file for writing!(1)\n";
++	  File.os().clear_error();
++	}
++      } else {
++	errs() << "ThreadSanitizer::makeFunctionsList - error opening file for writing!(2)\n";
++	File.os().clear_error();
++      }
++  } else {
++    errs() << "ThreadSanitizer::makeFunctionsList - Error no file and directory for function." << F.getName() << "\n";
++  }
++}
++#endif // ARCHER

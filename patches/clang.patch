@@ -1,0 +1,85 @@
+diff -rupN a/lib/CodeGen/CodeGenModule.cpp b/lib/CodeGen/CodeGenModule.cpp
+--- a/lib/CodeGen/CodeGenModule.cpp	2014-10-26 23:20:37.000000000 -0600
++++ b/lib/CodeGen/CodeGenModule.cpp	2014-10-26 23:27:53.000000000 -0600
+@@ -394,6 +394,21 @@ void CodeGenModule::Release() {
+   EmitVersionIdentMetadata();
+ 
+   EmitTargetMetadata();
++  
++#ifdef ARCHER
++  /// Insert metadata to instructions
++  for (llvm::Function &F : getModule()) {
++    for (auto &BB : F) {
++      for (auto &Inst : BB) {
++	if(SanitizerBL.isIn(Inst)) {
++	  llvm::LLVMContext& C = Inst.getContext();
++	  llvm::MDNode* N = llvm::MDNode::get(C, llvm::MDString::get(C, "not instrument"));
++	  Inst.setMetadata("archer.tsan.bl", N);
++	}
++      }
++    }
++  }
++#endif // ARCHER
+ }
+ 
+ void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
+diff -rupN a/lib/CodeGen/SanitizerBlacklist.cpp b/lib/CodeGen/SanitizerBlacklist.cpp
+--- a/lib/CodeGen/SanitizerBlacklist.cpp	2014-10-26 23:20:37.000000000 -0600
++++ b/lib/CodeGen/SanitizerBlacklist.cpp	2014-10-26 23:13:00.000000000 -0600
+@@ -16,6 +16,11 @@
+ #include "llvm/IR/GlobalValue.h"
+ #include "llvm/IR/Module.h"
+ 
++#ifdef ARCHER
++#include "llvm/IR/DebugInfo.h"
++using namespace llvm;
++#endif // ARCHER
++
+ using namespace clang;
+ using namespace CodeGen;
+ 
+@@ -47,6 +52,21 @@ bool SanitizerBlacklist::isIn(const llvm
+          SCL->inSection("type", GetGlobalTypeString(G), Category);
+ }
+ 
++#ifdef ARCHER
++bool SanitizerBlacklist::isIn(const llvm::Instruction &I) const {
++  if (MDNode *N = I.getMetadata("dbg")) {
++    DILocation Loc(N);
++    unsigned Line = Loc.getLineNumber();
++    StringRef File = Loc.getFilename();
++    StringRef Dir = Loc.getDirectory();
++
++    return SCL->inSection(Line, File, Dir);
++  }
++
++  return false;
++}
++#endif // ARCHER
++
+ bool SanitizerBlacklist::isBlacklistedType(StringRef MangledTypeName) const {
+   return SCL->inSection("type", MangledTypeName);
+ }
+diff -rupN a/lib/CodeGen/SanitizerBlacklist.h b/lib/CodeGen/SanitizerBlacklist.h
+--- a/lib/CodeGen/SanitizerBlacklist.h	2014-10-26 23:20:37.000000000 -0600
++++ b/lib/CodeGen/SanitizerBlacklist.h	2014-10-26 23:13:00.000000000 -0600
+@@ -22,6 +22,9 @@
+ namespace llvm {
+ class GlobalVariable;
+ class Function;
++#ifdef ARCHER
++class Instruction;
++#endif // ARCHER
+ class Module;
+ }
+ 
+@@ -38,6 +41,9 @@ public:
+   bool isIn(const llvm::Function &F) const;
+   bool isIn(const llvm::GlobalVariable &G,
+             const StringRef Category = StringRef()) const;
++#ifdef ARCHER
++  bool isIn(const llvm::Instruction &I) const;
++#endif // ARCHER
+   bool isBlacklistedType(StringRef MangledTypeName) const;
+ };
+ }  // end namespace CodeGen
