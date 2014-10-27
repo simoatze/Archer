@@ -23,9 +23,9 @@ int main(int argc, char **argv)
   for (i = 0; i < MAX; ++i) {
     a[i] = i;
   }
-
+  
 #pragma omp parallel for
-  for (int i = 0; i < MAX - 1; ++i) {
+  for (i = 0; i < MAX - 1; ++i) {
     a[i] = a[i + 1] + 1;
   }
 
