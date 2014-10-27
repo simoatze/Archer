@@ -10,12 +10,13 @@ else
 fi
 
 WORKING_DIR=`pwd`
-
 cd ..
+BASE=`pwd`/LLVM
+mkdir ${BASE}
+cd $BASE
 
 # LLVM installation directory
 LLVM_INSTALL=${HOME}/usr # --prefix
-BASE=`pwd`
 LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
@@ -34,11 +35,11 @@ git clone https://github.com/clang-omp/llvm ${LLVM_SRC}
 
 # Clang Sources
 echo "Obtaining LLVM/Clang OpenMP..."
-git clone -b clang-omp https://github.com/clang-omp/clang llvm/tools/clang ${CLANG_SRC}
+git clone -b clang-omp https://github.com/clang-omp/clang ${CLANG_SRC}
 
 # Runtime Sources
 echo "Obtaining LLVM OpenMP Runtime..."
-git clone https://github.com/clang-omp/compiler-rt llvm/projects/compiler-rt ${LLVMRT_SRC}
+git clone https://github.com/clang-omp/compiler-rt ${LLVMRT_SRC}
 
 # Polly Sources
 echo "Obtaining Polly..."
@@ -52,19 +53,19 @@ git clone http://llvm.org/git/polly.git ${POLLY_SRC}
 
 # LLVM Patch
 cd ${LLVM_SRC}
-patch -p 1 < ../Archer/patches/llvm.patch
+patch -p 1 < ${WORKING_DIR}/llvm.patch
 
 # Clang Patch
 cd ${CLANG_SRC}
-patch -p 1 < ../Archer/patches/clang.patch
+patch -p 1 < ${WORKING_DIR}/clang.patch
 
 # # Polly Patch
 # cd ${POLLY_SRC}
-# patch -p 1 < ../Archer/patches/polly.patch
+# patch -p 1 < ${WORKING_DIR}/polly.patch
 
 # # Intel OpenMP Runtime Patch
 # cd ${INTELOMPRT}
-# # patch -p 1 < ../Archer/patches/intelomprt.patch
+# # patch -p 1 < ${WORKING_DIR}/intelomprt.patch
 
 # Compiling and installing Cloog (dependency for Polly)
 ${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
