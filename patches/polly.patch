@@ -1,0 +1,15 @@
+diff --git a/lib/Exchange/JSONExporter.cpp b/lib/Exchange/JSONExporter.cpp
+index 21f7bf8..38b0488 100644
+--- a/lib/Exchange/JSONExporter.cpp
++++ b/lib/Exchange/JSONExporter.cpp
+@@ -130,8 +130,8 @@ bool JSONExporter::runOnScop(Scop &scop) {
+   std::string fileContent = writer.write(jscop);
+ 
+   // Write to file.
+-  std::error_code EC;
+-  tool_output_file F(FileName, EC, llvm::sys::fs::F_Text);
++  std::string ErrInfo;
++  tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Text);
+ 
+   std::string FunctionName = R.getEntry()->getParent()->getName();
+   errs() << "Writing JScop '" << R.getNameStr() << "' in function '"

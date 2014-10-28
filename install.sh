@@ -23,7 +23,7 @@ LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
 POLLY_SRC=${LLVM_SRC}/tools/polly
-POLLY_COMMIT="830c9e06589cbeda499609bd4ac227905a4562e8"
+POLLY_COMMIT="d24789b6ad270d80509c73fc986d1275895c5b7b"
 INTELOMPRT=${BASE}/intelomprt
 LLVM_BUILD=${BASE}/llvm_build
 mkdir -p ${LLVM_BUILD}
