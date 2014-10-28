@@ -19,17 +19,18 @@ mkdir -p ${BASE}
 cd $BASE
 
 # LLVM installation directory
-LLVM_INSTALL=${HOME}/usr # --prefix
 LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
 POLLY_SRC=${LLVM_SRC}/tools/polly
-LLVM_DEP=${LLVM_BUILD}/dependencies
-mkdir ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
 INTELOMPRT=${BASE}/intelomprt
 LLVM_BUILD=${BASE}/llvm_build
+mkdir -p ${LLVM_BUILD}
+LLVM_DEP=${LLVM_BUILD}/dependencies
+mkdir -p ${LLVM_DEP}
 CLOOG_INSTALL=${INSTALL_DIR}/usr
+LLVM_INSTALL=${HOME}/usr # --prefix
 
 # Obtaining the sources
 
@@ -83,7 +84,6 @@ make install
 
 # Compiling and installing LLVM
 echo "Building LLVM/Clang OpenMP..."
-mkdir ${LLVM_BUILD}
 cd ${LLVM_BUILD}
 export CC=gcc
 export CXX=g++
