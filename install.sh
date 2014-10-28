@@ -25,7 +25,6 @@ done
 
 echo
 echoc "LLVM will be installed under [${LLVM_INSTALL}]"
-echo
 
 # Get the number of cores to speed up make process
 if ! type "nproc" > /dev/null; then
@@ -37,7 +36,6 @@ fi
 
 echo
 echoc "Installing LLVM/Clang OpenMP..."
-echo
 
 WORKING_DIR=`pwd`
 cd ..
