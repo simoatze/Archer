@@ -23,6 +23,7 @@ LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
 POLLY_SRC=${LLVM_SRC}/tools/polly
+POLLY_COMMIT="830c9e06589cbeda499609bd4ac227905a4562e8"
 INTELOMPRT=${BASE}/intelomprt
 LLVM_BUILD=${BASE}/llvm_build
 mkdir -p ${LLVM_BUILD}
@@ -49,6 +50,7 @@ git clone git@github.com:clang-omp/compiler-rt.git ${LLVMRT_SRC}
 # Polly Sources
 echo "Obtaining Polly..."
 git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
+git reset --hard ${POLLY_COMMIT}
 
 # Intel OpenMP Runtime Sources
 # echo "Obtaining Intel OpenMP Runtime..."

@@ -21,7 +21,7 @@
 more information go to http://clang-omp.github.io).
 
 ** Building
-First obtain *Archer*, e.g. from Github:
+First obtain *Archer*, e.g. from Github (https://github.com/soarlab/Archer):
 
 #+BEGIN_SRC sh :exports code
   git clone git@github.com:soarlab/llvm35omp_tsanbl.git Archer
