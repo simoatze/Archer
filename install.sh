@@ -69,8 +69,8 @@ cd ${CLANG_SRC}
 patch -p 1 < ${WORKING_DIR}/patches/clang.patch
 
 # # Polly Patch
-# cd ${POLLY_SRC}
-# patch -p 1 < ${WORKING_DIR}/patches/polly.patch
+cd ${POLLY_SRC}
+patch -p 1 < ${WORKING_DIR}/patches/polly.patch
 
 # # Intel OpenMP Runtime Patch
 # cd ${INTELOMPRT}
