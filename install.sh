@@ -50,7 +50,7 @@ git clone git@github.com:clang-omp/compiler-rt.git ${LLVMRT_SRC}
 # Polly Sources
 echo "Obtaining Polly..."
 git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
-git reset --hard ${POLLY_COMMIT}
+git checkout ${POLLY_COMMIT}
 
 # Intel OpenMP Runtime Sources
 # echo "Obtaining Intel OpenMP Runtime..."
