@@ -9,10 +9,13 @@ else
     PROCS=`expr $PROCS + 1`    
 fi
 
+echo "Installing LLVM/Clang OpenMP..."
+echo
+
 WORKING_DIR=`pwd`
 cd ..
 BASE=`pwd`/LLVM
-mkdir ${BASE}
+mkdir -p ${BASE}
 cd $BASE
 
 # LLVM installation directory
@@ -21,29 +24,29 @@ LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
 POLLY_SRC=${LLVM_SRC}/tools/polly
+LLVM_DEP=${LLVM_BUILD}/dependencies
 CLOOG_SRC=${LLVM_DEP}/cloog_src
 INTELOMPRT=${BASE}/intelomprt
 LLVM_BUILD=${BASE}/llvm_build
-LLVM_DEP=${LLVM_BUILD}/dependencies
 CLOOG_INSTALL=${INSTALL_DIR}/usr
 
 # Obtaining the sources
 
 # LLVM Sources
 echo "Obtaining LLVM OpenMP..."
-git clone https://github.com/clang-omp/llvm ${LLVM_SRC}
+git clone git@github.com:clang-omp/llvm.git ${LLVM_SRC}
 
 # Clang Sources
 echo "Obtaining LLVM/Clang OpenMP..."
-git clone -b clang-omp https://github.com/clang-omp/clang ${CLANG_SRC}
+git clone -b clang-omp git@github.com:clang-omp/clang.git ${CLANG_SRC}
 
 # Runtime Sources
 echo "Obtaining LLVM OpenMP Runtime..."
-git clone https://github.com/clang-omp/compiler-rt ${LLVMRT_SRC}
+git clone git@github.com:clang-omp/compiler-rt.git ${LLVMRT_SRC}
 
 # Polly Sources
 echo "Obtaining Polly..."
-git clone http://llvm.org/git/polly.git ${POLLY_SRC}
+git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
 
 # Intel OpenMP Runtime Sources
 # echo "Obtaining Intel OpenMP Runtime..."
@@ -52,22 +55,25 @@ git clone http://llvm.org/git/polly.git ${POLLY_SRC}
 # Applying the Patches
 
 # LLVM Patch
+echo "Patching LLVM..."
 cd ${LLVM_SRC}
-patch -p 1 < ${WORKING_DIR}/llvm.patch
+patch -p 1 < ${WORKING_DIR}/patches/llvm.patch
 
 # Clang Patch
+echo "Patching Clang..."
 cd ${CLANG_SRC}
-patch -p 1 < ${WORKING_DIR}/clang.patch
+patch -p 1 < ${WORKING_DIR}/patches/clang.patch
 
 # # Polly Patch
 # cd ${POLLY_SRC}
-# patch -p 1 < ${WORKING_DIR}/polly.patch
+# patch -p 1 < ${WORKING_DIR}/patches/polly.patch
 
 # # Intel OpenMP Runtime Patch
 # cd ${INTELOMPRT}
-# # patch -p 1 < ${WORKING_DIR}/intelomprt.patch
+# # patch -p 1 < ${WORKING_DIR}/patches/intelomprt.patch
 
 # Compiling and installing Cloog (dependency for Polly)
+echo "Building dependencies..."
 ${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
 cd ${CLOOG_SRC}
 ./configure --prefix=${CLOOG_INSTALL}
@@ -75,6 +81,7 @@ make -j${PROCS} -l${PROCS}
 make install
 
 # Compiling and installing LLVM
+echo "Building LLVM/Clang OpenMP..."
 mkdir ${LLVM_BUILD}
 cd ${LLVM_BUILD}
 export CC=gcc
