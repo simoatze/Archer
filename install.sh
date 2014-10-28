@@ -4,8 +4,7 @@
 if [ "$(uname)" == "Linux" ]; then
     RED='\e[0;31m'
     NC='\e[0m'
-    myecho() { echo -e "${RED}$1${NC}"; }
-    alias echoc="myecho"
+    echoc() { echo -e "${RED}$1${NC}"; }
 fi
 
 LLVM_INSTALL=/usr
