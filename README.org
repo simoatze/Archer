@@ -24,15 +24,12 @@ more information go to http://clang-omp.github.io).
 First obtain *Archer*, e.g. from Github:
 
 #+BEGIN_SRC sh :exports code
-  mkdir llvm35omp
-  cd llvm35omp
-  git clone git@github.com:soarlab/llvm35omp_tsanbl.git llvm_src
+  git clone git@github.com:soarlab/llvm35omp_tsanbl.git Archer
 #+END_SRC
 
-Then change directory and build *Archer* by running =install.sh=:
+Then build *Archer* by running =install.sh=:
 
 #+BEGIN_SRC sh :exports code
-  cd llvm_src
   ./install.sh
 #+END_SRC
 
