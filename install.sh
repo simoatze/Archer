@@ -29,8 +29,8 @@ mkdir -p ${LLVM_BUILD}
 LLVM_DEP=${LLVM_BUILD}/dependencies
 mkdir -p ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
-CLOOG_INSTALL=${INSTALL_DIR}/usr
 LLVM_INSTALL=${HOME}/usr # --prefix
+CLOOG_INSTALL=${LLVM_DIR}/usr
 
 # Obtaining the sources
 
