@@ -25,6 +25,7 @@ CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
 POLLY_SRC=${LLVM_SRC}/tools/polly
 LLVM_DEP=${LLVM_BUILD}/dependencies
+mkdir ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
 INTELOMPRT=${BASE}/intelomprt
 LLVM_BUILD=${BASE}/llvm_build
