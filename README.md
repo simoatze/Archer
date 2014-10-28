@@ -30,7 +30,7 @@ First obtain **Archer**, e.g. from Github (<https://github.com/soarlab/Archer>):
 
 Then build **Archer** by running `install.sh`:
 
-    ./install.sh --prefix=llvm_install_path [default=/usr]
+    ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
 
 The installation script will create a folder called *LLVM* at the same
 level of *Archer*. 
