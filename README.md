@@ -24,13 +24,16 @@ more information go to <http://clang-omp.github.io>).
 
 ## Building
 
-First obtain **Archer**, e.g. from Github:
+First obtain **Archer**, e.g. from Github (<https://github.com/soarlab/Archer>):
 
     git clone git@github.com:soarlab/llvm35omp_tsanbl.git Archer
 
 Then build **Archer** by running `install.sh`:
 
-    ./install.sh
+    ./install.sh --prefix=llvm_install_path [default=/usr]
+
+The installation script will create a folder called *LLVM* at the same
+level of *Archer*. 
 
 # Configuration
 
