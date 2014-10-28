@@ -88,7 +88,6 @@ cd ${LLVM_BUILD}
 export CC=gcc
 export CXX=g++
 cmake -D CMAKE_INSTALL_PREFIX:PATH=${LLVM_INSTALL} -D CMAKE_PREFIX_PATH=${CLOOG_INSTALL} -D LINK_POLLY_INTO_TOOLS:Bool=ON ${LLVM_SRC}
-echo "Processors number: " ${PROCS}
 make -j${PROCS} -l${PROCS}
 make install
 
