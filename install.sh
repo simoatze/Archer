@@ -1,6 +1,25 @@
 #!/bin/bash
 # set -x
 
+LLVM_INSTALL=/usr
+
+for i in "$@"
+do
+    case $i in
+	--prefix=*)
+	    LLVM_INSTALL="${i#*=}"
+	    shift
+	    ;;
+	*)
+	    echo "Usage: ./install.sh [--prefix=PREFIX[/usr]]"
+	    exit
+	    ;;
+    esac
+done
+
+echo "LLVM will be installed under [${LLVM_INSTALL}]"
+echo
+
 # Get the number of cores to speed up make process
 if ! type "nproc" > /dev/null; then
     PROCS=$(nprocs)
@@ -30,8 +49,8 @@ mkdir -p ${LLVM_BUILD}
 LLVM_DEP=${LLVM_BUILD}/dependencies
 mkdir -p ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
-LLVM_INSTALL=${HOME}/usr # --prefix
-CLOOG_INSTALL=${LLVM_INSTALL}
+CLOOG_INSTALL=${LLVM_DEP}/cloog_install
+INTELOMPRT_FILE=libomp_20140926_oss.tgz
 
 # Obtaining the sources
 
@@ -53,8 +72,9 @@ git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
 git checkout ${POLLY_COMMIT}
 
 # Intel OpenMP Runtime Sources
-# echo "Obtaining Intel OpenMP Runtime..."
-# wget https://www.openmprtl.org/sites/default/files/libomp_20140926_oss.tgz
+mkdir ${INTELOMPRT}
+echo "Obtaining Intel OpenMP Runtime..."
+wget --directory-prefix=${INTELOMPRT} https://www.openmprtl.org/sites/default/files/${INTELOMPRT_FILE}
 
 # Applying the Patches
 
@@ -93,5 +113,23 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=${LLVM_INSTALL} -D CMAKE_PREFIX_PATH=${CLOOG_
 make -j${PROCS} -l${PROCS}
 make install
 
+# Compiling and installing Intel OpenMP Runtime
+cd ${INTELOMPRT}
+tar xzvf ${INTELOMPRT_FILE}
+cd libomp_oss/cmake
+cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
+make -j${PROCS} -l${PROCS}
+cd ..
+cp -r exports ${LLVM_INSTALL}/lib/intelomprt
+
+echo "In order to use LLVM/Clang and the Intel OpenMP Runtime"
+echo "set the following path variables:"
+echo
+echo "export PATH=${LLVM_INSTALL}:\${PATH}"
+echo "export LD_LIBRARY_PATH=${LLVM_INSTALL}/lib/intelomprt/lin_32e:\${LD_LIBRARY_PATH}"
+echo
+echo "or add it in your \"~/.bashrc\"."
+echo
 echo
 echo "LLVM installation completed."
+echo
