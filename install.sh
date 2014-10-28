@@ -149,7 +149,7 @@ echo
 echoc "export PATH=${LLVM_INSTALL}:\${PATH}"
 echoc "export LD_LIBRARY_PATH=${LLVM_INSTALL}/lib/intelomprt/lin_32e:\${LD_LIBRARY_PATH}"
 echo
-echoc "or add it in your \"~/.bashrc\"."
+echo "or add it in your \"~/.bashrc\"."
 echo
 echo
 echoc "LLVM installation completed."
