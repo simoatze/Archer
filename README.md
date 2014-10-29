@@ -26,7 +26,7 @@ more information go to <http://clang-omp.github.io>).
 
 First obtain **Archer**, e.g. from Github (<https://github.com/soarlab/Archer>):
 
-    git clone git@github.com:soarlab/llvm35omp_tsanbl.git Archer
+    git clone git@github.com:soarlab/Archer.git Archer
 
 Then build **Archer** by running `install.sh`:
 
