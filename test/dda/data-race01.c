@@ -1,13 +1,3 @@
-/*
- ============================================================================
- Name        : data_race01.c
- Author      : Simone Atzeni
- Version     : 1.0
- Copyright   : 2014
- Description : Data Race in OpenMP Programs
- ============================================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 

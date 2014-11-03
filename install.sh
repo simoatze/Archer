@@ -46,7 +46,7 @@ cd $BASE
 # LLVM installation directory
 LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
-LLVMRT_SRC=${BASE}/llvm_src/project/compiler-rt
+LLVMRT_SRC=${BASE}/llvm_src/projects/compiler-rt
 POLLY_SRC=${LLVM_SRC}/tools/polly
 POLLY_COMMIT="d24789b6ad270d80509c73fc986d1275895c5b7b"
 INTELOMPRT=${BASE}/intelomprt

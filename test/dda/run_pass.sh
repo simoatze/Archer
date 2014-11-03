@@ -15,13 +15,13 @@ export LLVM_LINK=$LLVM_PATH/llvm-link
 ######################
 # LLVM pass parameters
 ######################
-export PASS=../src/libArcher.so
+export PASS=../../src/libArcher.so
 export PASS_FLAG=archer
 
 ##############
 # Program name
 ##############
-export PROG_NAME=data-race01
+export PROG_NAME=$1
 export PROG_NEW_NAME=$PROG_NAME\_all
 $CLANG -emit-llvm -O0 -g -c $PROG_NAME.c -o $PROG_NAME.bc
 
