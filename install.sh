@@ -88,31 +88,31 @@ echo
 echo "Obtaining Intel OpenMP Runtime..."
 wget --directory-prefix=${INTELOMPRT} https://www.openmprtl.org/sites/default/files/${INTELOMPRT_FILE}
 
-# Applying the Patches
+# Applying the Patch
 
 # LLVM Patch
 echo
 echoc "Patching LLVM..."
 cd ${LLVM_SRC}
-patch -p 1 < ${WORKING_DIR}/patches/llvm.patch
+patch -p 1 < ${WORKING_DIR}/patch/llvm.patch
 
 # Clang Patch
 echo
 echoc "Patching Clang..."
 cd ${CLANG_SRC}
-patch -p 1 < ${WORKING_DIR}/patches/clang.patch
+patch -p 1 < ${WORKING_DIR}/patch/clang.patch
 
 # # Polly Patch
 echo
 echoc "Patching Polly..."
 cd ${POLLY_SRC}
-patch -p 1 < ${WORKING_DIR}/patches/polly.patch
+patch -p 1 < ${WORKING_DIR}/patch/polly.patch
 
 # # Intel OpenMP Runtime Patch
 # echo
 # echoc "Patching Intel OpenMP Runtime..."
 # cd ${INTELOMPRT}
-# patch -p 1 < ${WORKING_DIR}/patches/intelomprt.patch
+# patch -p 1 < ${WORKING_DIR}/patch/intelomprt.patch
 
 # Compiling and installing Cloog (dependency for Polly)
 echo
