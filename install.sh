@@ -44,6 +44,7 @@ mkdir -p ${BASE}
 cd $BASE
 
 # LLVM installation directory
+ARCHER_INSTALL=${LLVM_INSTALL}/local/archer
 LLVM_SRC=${BASE}/llvm_src
 CLANG_SRC=${BASE}/llvm_src/tools/clang
 LLVMRT_SRC=${BASE}/llvm_src/projects/compiler-rt
@@ -126,28 +127,45 @@ make install
 # Compiling and installing LLVM
 echo
 echoc "Building LLVM/Clang OpenMP..."
+# Compiling and installing Archer Plugins
+# Copying ArcherPlugin in "tools/clang/example" directory
+cp -R ${WORKING_DIR}/plugins/ArcherPlugin ${LLVM_SRC}/tools/clang/examples
+echo "add_subdirectory(ArcherPlugin)" >> ${LLVM_SRC}/tools/clang/examples/CMakeLists.txt
 cd ${LLVM_BUILD}
 export CC=gcc
 export CXX=g++
 cmake -D CMAKE_INSTALL_PREFIX:PATH=${LLVM_INSTALL} -D CMAKE_PREFIX_PATH=${CLOOG_INSTALL} -D LINK_POLLY_INTO_TOOLS:Bool=ON ${LLVM_SRC}
 make -j${PROCS} -l${PROCS}
+echoc "Building Archer Plugins..."
+make ArcherPlugin
+cp ${LLVM_BUILD}/lib/ArcherPlugin.so ${LLVM_INSTALL}/lib
+echoc "Installing LLVM/Clang OpenMP..."
 make install
 
 # Compiling and installing Intel OpenMP Runtime
+echoc "Building Intel OpenMP Runtime..."
 cd ${INTELOMPRT}
 tar xzvf ${INTELOMPRT_FILE}
 cd libomp_oss/cmake
 cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 make -j${PROCS} -l${PROCS}
-cd ..
-cp -r exports ${LLVM_INSTALL}/lib/intelomprt
+cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib ${LLVM_INSTALL}/lib/intelomprt
+# Installing Instrumented Intel OpenMP Runtime (temporary until patch)
+cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
+
+# Compiling and installing Archer
+echoc "Building Archer..."
+cd ${WORKING_DIR}
+mkdir -p ${ARCHER_INSTALL}
+cp -R ${WORKING_DIR}/bin ${ARCHER_INSTALL}
+cp -R ${WORKING_DIR}/lib ${ARCHER_INSTALL}
 
 echo
-echo "In order to use LLVM/Clang and the Intel OpenMP Runtime"
+echo "In order to use LLVM/Clang, the Intel OpenMP Runtime and Archer"
 echo "set the following path variables:"
 echo
-echoc "export PATH=${LLVM_INSTALL}:\${PATH}"
-echoc "export LD_LIBRARY_PATH=${LLVM_INSTALL}/lib/intelomprt/lin_32e:\${LD_LIBRARY_PATH}"
+echoc "export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}"
+echoc "export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
 echo
 echo "or add it in your \"~/.bashrc\"."
 echo
