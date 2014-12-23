@@ -15,7 +15,7 @@ export LLVM_LINK=$LLVM_PATH/llvm-link
 ######################
 # LLVM pass parameters
 ######################
-export PASS=../../src/libArcher.so
+export PASS=../../lib/libArcher.so
 export PASS_FLAG=archer
 rm -rf .polly
 

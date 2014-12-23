@@ -22,8 +22,8 @@ using namespace archer;
 
 ArcherDDAClassVisitor::ArcherDDAClassVisitor(StringRef InFile)
 {
-  ddfilename = InFile.str() + ".polly.dd";
-  blfilename = InFile.str() + ".polly.bl";
+  ddfilename = InFile.str() + ".dd";
+  blfilename = InFile.str() + ".bl";
   
   std::pair<StringRef, StringRef> pathname = InFile.rsplit('/');
   
