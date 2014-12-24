@@ -67,7 +67,7 @@ void ArcherDDA::printScop(raw_ostream &OS) const {
   S->print(OS);
 }
 
-bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isDependency) {
+bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   polly::Scop *S;
   std::string content;
 
@@ -94,7 +94,8 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isDependency) {
   	llvm::raw_string_ostream rso(str);
   	BI->print(rso);
 
-  	std::string string = "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+  	// std::string string = "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+	std::string string = std::to_string(Line) + "\n";
   	if(content.find(string) == std::string::npos) {
   	  content += string;
   	  DEBUG(llvm::dbgs() << content << "\n");
@@ -107,12 +108,11 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isDependency) {
   std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
   std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
   std::string FileName;
-  if(isDependency)
+  if(!isNotDependency)
     FileName = dir + "/" + filename.first.str() + ".dd";
   else
     FileName = dir + "/" + filename.first.str() + ".bl";
 
-  llvm::dbgs() << FileName << "\n";
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
 

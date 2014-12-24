@@ -22,13 +22,21 @@ using namespace archer;
 
 ArcherDDAClassVisitor::ArcherDDAClassVisitor(StringRef InFile)
 {
-  ddfilename = InFile.str() + ".dd";
-  blfilename = InFile.str() + ".bl";
+  std::string path;
+  std::string filename;
+
+  ddfilename = ".polly/" + InFile.str() + ".dd";
+  blfilename = ".polly/" + InFile.str() + ".bl";
   
   std::pair<StringRef, StringRef> pathname = InFile.rsplit('/');
   
-  std::string path = pathname.first.str();
-  std::string filename = pathname.second.str();
+  if(pathname.second.empty()) {
+    path = "";
+    filename = pathname.first.str();
+  } else {
+    path = pathname.first.str();
+    filename = pathname.second.str();
+  }
 
   // Read file "ddfilename" and fill "ddaloc" struct
   parse(ddfilename, false, path, filename);
@@ -52,7 +60,7 @@ void ArcherDDAClassVisitor::parse(std::string pathname, bool value, std::string 
   
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr = MemoryBuffer::getFile(pathname);
   if (std::error_code EC = FileOrErr.getError()) {
-    llvm::errs() << "Can't open file '" << pathname + "': " + EC.message();
+    llvm::errs() << "Can't open file '" << pathname + "': " + EC.message() + "\n";
     exit(-1);
   }
   int LineNo = 1;
@@ -93,7 +101,7 @@ bool ArcherDDAClassVisitor::VisitStmt(clang::Stmt* stmt)
     OMPStmt ompStmt(CS->capture_size(), sourceMgr->getSpellingLineNumber(CS->getLocStart()), sourceMgr->getSpellingLineNumber(CS->getLocEnd()));;
     omploc.omp_range.insert(std::make_pair(sourceMgr->getSpellingLineNumber(stmt->getLocStart()), ompStmt));
 
-    // llvm::dbgs() << "CapturedStmt[" << CS->capture_size() << "] - " << sourceMgr->getFilename(CS->getLocStart()) << " - LOC_START:" << sourceMgr->getSpellingLineNumber(CS->getLocStart()) << " - LOC_END:" << sourceMgr->getSpellingLineNumber(CS->getLocEnd()) << "\n";
+    //llvm::dbgs() << "CapturedStmt[" << CS->capture_size() << "] - " << sourceMgr->getFilename(CS->getLocStart()) << " - LOC_START:" << sourceMgr->getSpellingLineNumber(CS->getLocStart()) << " - LOC_END:" << sourceMgr->getSpellingLineNumber(CS->getLocEnd()) << "\n";
   }
     break;
   default:
@@ -129,8 +137,12 @@ bool ArcherDDAClassVisitor::createBlacklist()
 bool ArcherDDAClassVisitor::writeBlacklistFile() 
 {
   std::string fileContent;
+  std::string dir;
   
-  std::string dir = blacklist.path + "/blacklists";
+  if(blacklist.path.empty())
+    dir = ".blacklists";
+  else
+    dir = blacklist.path + "/.blacklists";
   
   if(llvm::sys::fs::create_directory(Twine(dir))) {
     llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
@@ -140,6 +152,8 @@ bool ArcherDDAClassVisitor::writeBlacklistFile()
   for (std::set<unsigned>::iterator it = blacklist.line_entries.begin(); it != blacklist.line_entries.end(); ++it)
     fileContent = fileContent + "line:" + NumberToString<unsigned>(*it) + "\n";
   fileContent = "# Blacklisting information sourcefile \"" + blacklist.filename + "\"\n" + fileContent;
+
+  //llvm::dbgs() << fileContent << "\n";
   
   std::string FileName = dir + "/" + blacklist.filename + ".bl";
   

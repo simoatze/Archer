@@ -1,5 +1,4 @@
-#!/bin/bash
-# -x
+#!/bin/bash -x
 
 #################
 # LLVM parameters
@@ -26,7 +25,7 @@ export PASS_FLAG=archer
 # Cleaning environment
 ######################
 rm -rf .polly
-rm -rf .blacklist
+rm -rf .blacklists
 
 ##############
 # Program name
@@ -56,15 +55,17 @@ $OPT -load $PASS -$PASS_FLAG $PROG_NAME.ll -o $PROG_NAME-optimized.bc
 ###################
 # Create empty blacklist file
 ###################
-mkdir -p .blacklist
-touch .blacklist/$PROG_NAME.bl
+mkdir -p .blacklists
+touch .blacklists/$PROG_NAME.bl
 
 ###################
 # Applying Clang Plugin and final compilation (ThreadSanitizer and blacklist)
 ###################
-$CLANG -fopenmp -O0 -g -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS \
+$CLANG -fopenmp -O0 -g \
+    -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS \
     -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -D_GNU_SOURCE \
-    $PROG_NAME -fsyntax-only \
     -Xclang -load -Xclang ArcherPlugin.so -Xclang \
     -plugin -Xclang archer \
-    -fsanitize=thread -fsanitize-blacklist=.blacklist/$PROG_NAME.bl
+    -fsanitize=thread -fsanitize-blacklist=.blacklists/$PROG_NAME.bl \
+    $PROG_NAME -o $EXEC_NAME \
+    -L$HOME/usr/lib/intelomprt -liomp5_tsan
