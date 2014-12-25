@@ -1,4 +1,5 @@
-#!/bin/bash -x
+#!/bin/bash
+# -x
 
 #################
 # LLVM parameters
@@ -61,11 +62,19 @@ touch .blacklists/$PROG_NAME.bl
 ###################
 # Applying Clang Plugin and final compilation (ThreadSanitizer and blacklist)
 ###################
+# $CLANG -fopenmp -O0 -g \
+#     -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS \
+#     -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -D_GNU_SOURCE \
+#     $PROG_NAME \
+#     -Xclang -load -Xclang ArcherPlugin.so -Xclang \
+#     -plugin -Xclang archer
 $CLANG -fopenmp -O0 -g \
     -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS \
     -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -D_GNU_SOURCE \
+    $PROG_NAME -fsyntax-only \
     -Xclang -load -Xclang ArcherPlugin.so -Xclang \
-    -plugin -Xclang archer \
+    -plugin -Xclang archer
+$CLANG -fopenmp -O0 -g \
     -fsanitize=thread -fsanitize-blacklist=.blacklists/$PROG_NAME.bl \
     $PROG_NAME -o $EXEC_NAME \
     -L$HOME/usr/lib/intelomprt -liomp5_tsan
