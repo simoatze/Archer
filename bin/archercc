@@ -35,7 +35,7 @@ includedir=/usr/include/mpich2
 libdir=/usr/lib
 
 function archer {
-    $Show $CC -emit-llvm -O0 -g -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include  -I$includedir -c $DIR_NAME$PROG_NAME -o $PROG_NAME.bc
+    $Show $CC -emit-llvm -O0 -g $VARIABLES -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include  -I$includedir -c $DIR_NAME$PROG_NAME -o $PROG_NAME.bc
     $Show $LLVM_LINK -o $PROG_NAME.bc $PROG_NAME.bc
     $Show $OPT -mem2reg $PROG_NAME.bc -o $PROG_NAME.opt
     $Show mv $PROG_NAME.opt $PROG_NAME.bc
@@ -49,6 +49,7 @@ function archer {
     $Show touch .blacklists/$PROG_NAME.bl
     
     $Show $CC -fopenmp -O0 -g \
+	$VARIABLES \
 	-I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include \
 	-I$includedir \
 	-D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS \
@@ -57,7 +58,8 @@ function archer {
 	-Xclang -load -Xclang ArcherPlugin.so -Xclang \
 	-plugin -Xclang archer
 
-    $Show $CC -fopenmp -O0 -g \
+    $Show $CC -fopenmp -O0 -g -fPIC \
+	$VARIABLES \
 	-I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include \
 	-I$includedir \
 	-fsanitize=thread -fsanitize-blacklist=.blacklists/$PROG_NAME.bl \
@@ -74,7 +76,7 @@ C_LINKPATH_SHL=""
 CFLAGS=" "
 CPPFLAGS="-D_FORTIFY_SOURCE=2 "
 LDFLAGS=" -Wl,-Bsymbolic-functions -Wl,-z,relro "
-LIBS="-lopa -lmpl  -lrt -lcr -lpthread  "
+LIBS="-lopa -lmpl -lrt -lcr -lpthread -lstdc++"
 MPILIBNAME="mpich"
 PMPILIBNAME="pmpich"
 NEEDSPLIB="no"
@@ -128,12 +130,6 @@ export LLVM_LINK=llvm-link
 ######################
 export PASS=libArcher.so
 export PASS_FLAG=archer
-
-######################
-# Cleaning environment
-######################
-rm -rf .polly
-rm -rf .blacklists
 
 #
 # ------------------------------------------------------------------------
@@ -237,6 +233,9 @@ for arg in "$@" ; do
     fi
     exit 0
     ;;
+    -D*)
+    VARIABLES=$arg" "
+    ;;
     *)
     if [[ $arg == *".c" ]] || [[ $arg == *".cc" ]] || [[ $arg == *".cpp" ]]
     then
@@ -264,6 +263,16 @@ if [ $# -eq 0 ] ; then
     echo "Error: Command line argument is needed!"
     "$0" -help
     exit 1
+fi
+
+######################
+# Cleaning environment
+######################
+# rm -rf .polly
+# rm -rf .blacklists
+if [ -n "$PROG_NAME" ]; then
+    rm -rf .polly/$PROG_NAME.*
+    rm -rf .blacklists/$PROG_NAME.*
 fi
 
 # -----------------------------------------------------------------------
@@ -336,10 +345,10 @@ if [ "$linking" = yes ] ; then
     fi
     
     if [ "$nativelinking" = yes ] ; then
-        $Show $CC -fopenmp -g -O0 -fsanitize=thread $TSAN_BLACKLISTING -pie $CPPFLAGS $CFLAGS $LDFLAGS "${allargs[@]}" -I$includedir
+        $Show $CC -fopenmp -g -O0 -fsanitize=thread $TSAN_BLACKLISTING $VARIABLES $CPPFLAGS $CFLAGS $LDFLAGS "${allargs[@]}" -I$includedir -L/home/simone/usr/lib/intelomprt -liomp5_tsan
         rc=$?
     else
-	$Show $CC -fopenmp -g -O0 -fsanitize=thread $TSAN_BLACKLISTING -pie $CPPFLAGS $CFLAGS $LDFLAGS "${allargs[@]}" -I$includedir ${path_list} $mpilibs $LIBS
+	$Show $CC -fopenmp -g -O0 -fsanitize=thread $TSAN_BLACKLISTING $VARIABLES $CPPFLAGS $CFLAGS $LDFLAGS "${allargs[@]}" -I$includedir ${path_list} $mpilibs $LIBS -L/home/simone/usr/lib/intelomprt -liomp5_tsan
         rc=$?
     fi
 else

@@ -90,17 +90,24 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   	StringRef File = Loc.getFilename();
   	StringRef Dir = Loc.getDirectory();
 
-  	std::string str;
-  	llvm::raw_string_ostream rso(str);
-  	BI->print(rso);
+	std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
+	std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
 
-  	// std::string string = "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
-	std::string string = std::to_string(Line) + "\n";
-  	if(content.find(string) == std::string::npos) {
-  	  content += string;
-  	  DEBUG(llvm::dbgs() << content << "\n");
-  	}
-  	DEBUG(llvm::dbgs() << File << " - Ignoring Line[" << Line << "]\n");
+	//llvm::dbgs() << File << " - " << filename.first << "\n";
+	if (File.compare(filename.first) == 0) {
+	  std::string str;
+	  // llvm::raw_string_ostream rso(str);
+	  // BI->print(rso);
+	  
+	  //llvm::dbgs() << "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+	  std::string string = std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+	  // std::string string = std::to_string(Line) + "\n";
+	  if(content.find(string) == std::string::npos) {
+	    content += string;
+	    DEBUG(llvm::dbgs() << content << "\n");
+	  }
+	  DEBUG(llvm::dbgs() << File << " - Ignoring Line[" << Line << "]\n");
+	}
       }
     }
   }
@@ -109,9 +116,9 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
   std::string FileName;
   if(!isNotDependency)
-    FileName = dir + "/" + filename.first.str() + ".dd";
+    FileName = dir + "/" + filename.first.str() + DD_LINES;
   else
-    FileName = dir + "/" + filename.first.str() + ".bl";
+    FileName = dir + "/" + filename.first.str() + BL_LINES;
 
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
@@ -141,8 +148,8 @@ bool ArcherDDA::runOnScop(Scop &Scop)
 
   Dependences *D = &getAnalysis<Dependences>();
   //D->printScop(dbgs());
-  llvm::dbgs() << "Printing Scop...\n";
-  Scop.print(dbgs());
+  // llvm::dbgs() << "Printing Scop...\n";
+  // Scop.print(dbgs());
 
   /*
   isl_union_map *Deps = D->getDependences(Dependences::TYPE_RAW | Dependences::TYPE_WAW | Dependences::TYPE_WAR);
@@ -173,3 +180,48 @@ bool ArcherDDA::runOnScop(Scop &Scop)
 
 char ArcherDDA::ID = 0;
 static RegisterPass<ArcherDDA> X("archer", "Archer Data Dependency Analysis for ThreadSanitizer blacklist generation", false, false);
+
+/*
+bool ArcherDDA::initializeFiles(polly::Scop &S) {
+  std::string ModuleName = S.getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
+  std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
+  std::string FileName;
+
+  FileName = dir + "/" + filename.first.str() + DD_LINES;
+
+  std::string ErrInfo1;
+  tool_output_file F(FileName.c_str(), ErrInfo1, llvm::sys::fs::F_Append);
+  
+  if (ErrInfo1.empty()) {
+    F.os() << "# LOCs that have data dependency";
+    F.os().close();
+    if (!F.os().has_error()) {
+      F.keep();
+    }
+  } else {    
+    errs() << "error opening file for writing!\n";
+    F.os().clear_error();
+    return false;
+  }
+
+  FileName = dir + "/" + filename.first.str() + BL_LINES;
+  
+  std::string ErrInfo2;
+  tool_output_file G(FileName.c_str(), ErrInfo2, llvm::sys::fs::F_Append);
+  
+  if (ErrInfo2.empty()) {
+    G.os() << "# LOCs that have not data dependency";
+    G.os().close();
+    if (!G.os().has_error()) {
+      G.keep();
+    }
+  } else {    
+    errs() << "error opening file for writing!\n";
+    G.os().clear_error();
+    return false;
+  }
+
+  fileInitialized = true;
+  return true;
+}
+*/

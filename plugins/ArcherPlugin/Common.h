@@ -17,6 +17,9 @@
 #include <sstream>
 #include <vector>
 
+#define DD_LINES ".dd"
+#define BL_LINES ".bl"
+
 struct DDAInfo {
   std::string path;
   std::string filename;

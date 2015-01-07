@@ -35,6 +35,9 @@
 
 using namespace llvm;
 
+#define DD_LINES ".dd"
+#define BL_LINES ".bl"
+
 struct clast_name;
 namespace llvm {
   class raw_ostream;
@@ -56,17 +59,22 @@ namespace polly {
 
   private:
     Scop *S;
+    bool fileInitialized;
+
     bool getLOCInfo(Scop &Scop, bool isDependency);
+    bool initializeFiles(polly::Scop &Scop);
 
   public:
     static char ID;
     std::string dir;
 
   ArcherDDA() : ScopPass(ID) {
+      fileInitialized = false;
       dir = ".polly";
+
       if(llvm::sys::fs::create_directory(Twine(dir))) {
 	llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
-	exit(-1);
+        exit(-1);
       }
     }
     

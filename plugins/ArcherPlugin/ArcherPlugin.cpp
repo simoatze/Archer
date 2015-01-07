@@ -25,8 +25,8 @@ ArcherDDAClassVisitor::ArcherDDAClassVisitor(StringRef InFile)
   std::string path;
   std::string filename;
 
-  ddfilename = ".polly/" + InFile.str() + ".dd";
-  blfilename = ".polly/" + InFile.str() + ".bl";
+  ddfilename = ".polly/" + InFile.str() + DD_LINES;
+  blfilename = ".polly/" + InFile.str() + BL_LINES;
   
   std::pair<StringRef, StringRef> pathname = InFile.rsplit('/');
   
@@ -60,19 +60,28 @@ void ArcherDDAClassVisitor::parse(std::string pathname, bool value, std::string 
   
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr = MemoryBuffer::getFile(pathname);
   if (std::error_code EC = FileOrErr.getError()) {
-    llvm::errs() << "Can't open file '" << pathname + "': " + EC.message() + "\n";
-    exit(-1);
-  }
-  int LineNo = 1;
-  SmallVector<StringRef, 16> Lines;
-  SplitString(FileOrErr.get().get()->getBuffer(), Lines, "\n\r");
-  ddaloc.path = path;
-  ddaloc.filename = filename;
-  for (SmallVectorImpl<StringRef>::iterator I = Lines.begin(), E = Lines.end(); I != E; ++I, ++LineNo) {
-    if (I->empty() || I->startswith("#"))
-      continue;
-    ddaloc.line_entries[StringToNumber<unsigned>(I->str())] = value;
-    //llvm::dbgs() << StringToNumber<unsigned>(I->str()) << " - " << ddaloc.line_entries[StringToNumber<unsigned>(I->str())] << "\n";
+    // llvm::errs() << "File '" << pathname + "' does not exist: " + EC.message() + "\n";
+    // llvm::errs() << "Can't open file '" << pathname + "': " + EC.message() + "\n";
+    // exit(-1);
+  } else {
+    int LineNo = 1;
+    SmallVector<StringRef, 16> Lines;
+    SplitString(FileOrErr.get().get()->getBuffer(), Lines, "\n\r");
+    ddaloc.path = path;
+    ddaloc.filename = filename;
+    for (SmallVectorImpl<StringRef>::iterator I = Lines.begin(), E = Lines.end(); I != E; ++I, ++LineNo) {
+      if (I->empty() || I->startswith("#"))
+	continue;
+      std::pair<StringRef, StringRef> values = I->split(',');
+      std::pair<StringRef, StringRef> names = values.second.split(',');
+      std::string index = values.first.str();
+      std::string File = names.first;
+      std::string Dir = names.second;
+      // llvm::dbgs() << "Info: " << index <<  " - " << File << " - " << Dir << "\n";
+      // llvm::dbgs() << StringToNumber<unsigned>(I->str()) << " - " << ddaloc.line_entries[StringToNumber<unsigned>(I->str())] << "\n";
+      if(filename.compare(File) == 0)
+	ddaloc.line_entries[StringToNumber<unsigned>(index)] = value;
+    }
   }
 }
 
@@ -113,21 +122,21 @@ bool ArcherDDAClassVisitor::VisitStmt(clang::Stmt* stmt)
 
 bool ArcherDDAClassVisitor::createBlacklist()
 {
-  llvm::dbgs() << "Generating Blacklist...\n";
-
+  // llvm::dbgs() << "Generating Blacklist...\n";
   // llvm::dbgs() << "Size: " << omploc.omp_range.size() << "\n";
 
   for (std::map<unsigned, bool>::iterator it = ddaloc.line_entries.begin(); it != ddaloc.line_entries.end(); ++it) {
     std::set<std::pair<unsigned, OMPStmt>>::iterator range = std::find_if(omploc.omp_range.begin(), omploc.omp_range.end(), CompareRange(it->first));
     
-
-    // llvm::dbgs() << it->first << " - " << it->second << "\n";
-    if(it->second) {
+    if(range->first != 0) {
+      // llvm::dbgs() << it->first << " - " << it->second << "\n";
+      if(it->second) {
       
-      blacklist.line_entries.insert(range->first);
-      blacklist.line_entries.insert(it->first);
+	blacklist.line_entries.insert(range->first);
+	blacklist.line_entries.insert(it->first);
       
-      // llvm::dbgs() << "Value: " << it->first << " - Pragma: " << range->first << " - NumOfStmt: " << range->second.num_of_stmt << " - Range:[" << range->second.lb_loc << "," << range->second.ub_loc << "]\n";
+	// llvm::dbgs() << "Value: " << it->first << " - Pragma: " << range->first << " - NumOfStmt: " << range->second.num_of_stmt << " - Range:[" << range->second.lb_loc << "," << range->second.ub_loc << "]\n";
+      }
     }
   }
   
@@ -237,20 +246,20 @@ X("archer", "Generate blacklisting information exploiting results from different
   
   return true;
   }
-  
+
   bool VisitParmVarDecl(clang::ParmVarDecl* decl)
   {
   //
   // Note: Don't believe this will work as I believe children will be
   //       called before this method is invoked
   //
-  
+
   bool ret = true;
-  
+
   std::string paramName = decl->getNameAsString();
-  
+
   llvm::dbgs() << "VisitParmVarDecl: name is " << paramName.c_str() << ".\n";
-  
+
   return(ret);
   }
   
@@ -259,28 +268,28 @@ X("archer", "Generate blacklisting information exploiting results from different
   // Note: Don't believe this will work as I believe children will be
   //       called before this method is invoked
   //
-  
+
   bool ret = true;
-  
+
   std::string varName = decl->getNameAsString();
-  
+
   llvm::dbgs() << "VisitVarDecl: name is " << varName.c_str() << ".\n";
-  
+
   return(ret);
   }
-  
+
   bool VisitNamedDecl(clang::NamedDecl* decl) {
   //
   // Note: Don't believe this will work as I believe children will be
   //       called before this method is invoked
   //
-  
+
   bool ret = true;
-  
+
   std::string declName = decl->getNameAsString();
-  
+
   llvm::dbgs() << "VisitNamedDecl: name is " << declName.c_str() << ".\n"; 
-  
+
   return(ret);
   }
 */
