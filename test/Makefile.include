@@ -1,5 +1,0 @@
-CC=clang
-CXX=clang++
-
-OMP_LIB=-L/g/g90/protze1/INSTALL/chaos_5_x86_64_ib/intel-omp/lib -liomp5
-OMP_TSAN_LIB=-L/g/g90/protze1/INSTALL/chaos_5_x86_64_ib/intel-omp/lib -liomp5_tsan

@@ -33,78 +33,13 @@ exec_prefix=/usr
 sysconfdir=/etc/mpich2
 includedir=/usr/include/mpich2
 libdir=/usr/lib
-BASE=""
-GENLIB=0
-
-function archer {
-    $Show $CC -emit-llvm -O0 -g $INCLUDES $VARIABLES -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include -I$includedir -c $DIR_NAME$PROG_NAME -o $PROG_NAME.bc
-    $Show $LLVM_LINK -o $PROG_NAME.bc $PROG_NAME.bc
-    $Show $OPT -mem2reg $PROG_NAME.bc -o $PROG_NAME.opt
-    $Show mv $PROG_NAME.opt $PROG_NAME.bc
-    $Show $OPT -always-inline -S -polly-canonicalize $PROG_NAME.bc > $PROG_NAME.ll
-    $Show $OPT -load $PASS -archer-dda -archer-memoryusage $PROG_NAME.ll -o $PROG_NAME-optimized.bc
-
-    $Show $CC -fopenmp -O0 -g \
-	$INCLUDES \
-    	$VARIABLES \
-    	-I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include \
-    	-I$includedir \
-    	-D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS \
-    	-D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -D_GNU_SOURCE \
-    	$DIR_NAME$PROG_NAME -fsyntax-only \
-    	-Xclang -load -Xclang ArcherPlugin.so -Xclang \
-    	-plugin -Xclang archer
-
-    # $Show $CC -fopenmp -O0 -g -fPIC \
-    #     $VARIABLES \
-    #     -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include \
-    #     -I$includedir \
-    #     -fsanitize=thread -fsanitize-blacklist=.blacklists/$PROG_NAME.bl \
-    #     -c $DIR_NAME$PROG_NAME -o $OBJ_NAME
-    
-    # $Show rm -rf *.ll *.bc
-}
-
-function blacklist {
-    if [ -n "$BASE" ] ; then
-    	for k in $BASE/*/.blacklists/*.fc; do
-	    dif=""
-	    dif=$(cmp --silent $k .blacklists/function_calls.fc || echo differ)
-	    if [ -n "$dif" ]; then
-    	    	$(cat $k >> .blacklists/function_calls.fc)
-	    fi
-    	done
-    fi
-
-    for i in .blacklists/*.bl; do
-	name=$(echo $i | awk -F"/" '{ print $2}')
-	filename="${name%.*}"
-	$Show archer-cmp $filename
-    done
-
-    for j in .blacklists/*.bl; do
-    	name=$(echo $j | awk -F"/" '{ print $2}')
-    	filename="${name%.*}"
-    	objname="${filename%.*}.o"
-    	$Show $CC -fopenmp -O0 -g -fPIC \
-	    $CFLAGS \
-	    $INCLUDES \
-    	    $VARIABLES \
-    	    -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include \
-    	    -I$includedir \
-    	    -fsanitize=thread -fsanitize-blacklist=.blacklists/$filename.bl \
-    	    -c $DIR_NAME$filename -o $objname
-	
-    	$Show rm -rf *.ll *.bc
-    done
-}
 
 # Default settings for compiler, flags, and libraries.
 # Determined by a combination of environment variables and tests within
 # configure (e.g., determining whehter -lsocket is needee)
 CC="clang"
 C_LINKPATH_SHL=""
-CFLAGS=${CFLAGS}
+CFLAGS=" "
 CPPFLAGS="-D_FORTIFY_SOURCE=2 "
 LDFLAGS=" -Wl,-Bsymbolic-functions -Wl,-z,relro "
 LIBS="-lopa -lmpl -lrt -lcr -lpthread -lstdc++"
@@ -113,53 +48,6 @@ PMPILIBNAME="pmpich"
 NEEDSPLIB="no"
 # MPICH2_VERSION is the version of the MPICH2 library that mpicc is intended for
 MPICH2_VERSION="1.4.1"
-#
-# Internal variables
-# Show is set to echo to cause the compilation command to be echoed instead 
-# of executed.
-Show=
-#
-# End of initialization of variables
-#---------------------------------------------------------------------
-# Environment Variables.
-# The environment variables MPICH_CC may be used to override the 
-# default choices.
-# In addition, if there is a file $sysconfdir/mpicc-$CCname.conf, 
-# where CCname is the name of the compiler with all spaces replaced by hyphens
-# (e.g., "cc -64" becomes "cc--64", that file is sources, allowing other
-# changes to the compilation environment.  See the variables used by the 
-# script (defined above)
-# Added MPICH_CC_OLD, MPICH_CC can be used to prefix CC with external utility,
-# e.g. setenv MPICH_CC 'eval linkcache $MPICH_CC_OLD'
-if [ -n "$MPICH_CC" ] ; then
-    MPICH_CC_OLD="$CC"
-    CC="$MPICH_CC"
-    CCname=`echo $CC | sed 's/ /-/g'`
-    if [ -s $sysconfdir/mpicc-$CCname.conf ] ; then
-        . $sysconfdir/mpicc-$CCname.conf
-    fi
-fi
-# Allow a profiling option to be selected through an environment variable
-if [ -n "$MPICC_PROFILE" ] ; then
-    profConf=$MPICC_PROFILE
-fi
-#
-# ------------------------------------------------------------------------
-# Archer Initialization
-#################
-# LLVM parameters
-#################
-# export LLVM_PATH=$HOME/usr/bin
-# export CC=$LLVM_PATH/clang
-export OPT=opt
-export LLC=llc
-export LLVM_DIS=llvm-dis
-export LLVM_LINK=llvm-link
-
-######################
-# LLVM pass parameters
-######################
-export PASS=libArcher.so
 
 #
 # ------------------------------------------------------------------------
@@ -265,15 +153,11 @@ for arg in "$@" ; do
     ;;
     -D*)
     VARIABLES+=$arg" "
+    # echo $VARIABLES
     ;;
     -I*)
     INCLUDES+=$arg" "
-    ;;
-    -B*)
-    BASE=${arg/"-B"/""}
-    ;;
-    -genlib*)
-    GENLIB=1
+    # echo $VARIABLES
     ;;
     *)
     if [[ $arg == *".c" ]] || [[ $arg == *".cc" ]] || [[ $arg == *".cpp" ]]
@@ -354,55 +238,28 @@ if [ -n "$profConf" ] ; then
     fi
 fi
 
-# -----------------------------------------------------------------------
-#
-# A temporary statement to invoke the compiler
-# Place the -L before any args incase there are any mpi libraries in there.
-# Eventually, we'll want to move this after any non-MPI implementation 
-# libraries.
-# We use a single invocation of the compiler.  This will be adequate until
-# we run into a system that uses a separate linking command.  With any luck,
-# such archaic systems are no longer with us.  This also lets us
-# accept any argument; we don't need to know if we've seen a source
-# file or an object file.  Instead, we just check for an option that
-# suppressing linking, such as -c or -M.
-if [ "$linking" = yes ] ; then
-    if [ -n "$C_LINKPATH_SHL" ] ; then
-	# prepend the path for the shared libraries to the library list
-	mpilibs="$C_LINKPATH_SHL$libdir $mpilibs"
-    fi
+$Show mv .blacklists/function_calls.fc.tmp .blacklists/function_calls.fc
+$Show rm -rf .blacklists/function_calls.fc.tmp
 
-    path_list=""
-    for path in "-L$libdir" ; do
-	found_path=0
-	for p in $path_list ; do
-	    if [ "$path" = "$p" ] ; then found_path=1 ; break ; fi
-	done
-	if [ "$found_path" = "0" ] ; then path_list="$path_list $path" ; fi
-    done
+for i in .blacklists/*.bl; do
+    name=$(echo $i | awk -F"/" '{ print $2}')
+    filename="${name%.*}"
+    $Show archer-cmp $filename
+done
 
-    TSAN_BLACKLISTING=
-    if [ "$direct_compiling" = yes ] ; then
-	archer
-	TSAN_BLACKLISTING=-fsanitize-blacklist=.blacklists/$PROG_NAME.bl
-    fi
-
-    $Show mv .blacklists/function_calls.fc.tmp .blacklists/function_calls.fc
-    $Show rm -rf .blacklists/function_calls.fc.tmp
-
-    blacklist
-            
-    if [ "$nativelinking" = yes ] ; then
-        $Show $CC -fopenmp -g -O0 -fsanitize=thread $INCLUDES -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include $TSAN_BLACKLISTING $VARIABLES $CPPFLAGS $CFLAGS $LDFLAGS "${allargs[@]}" -I$includedir -L$HOME/usr/lib/intelomprt -liomp5_tsan
-        rc=$?
-    else
-	$Show $CC -fopenmp -g -O0 -fsanitize=thread $INCLUDES -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include $TSAN_BLACKLISTING $VARIABLES $CPPFLAGS $CFLAGS $LDFLAGS "${allargs[@]}" -I$includedir ${path_list} $mpilibs $LIBS -L$HOME/usr/lib/intelomprt -liomp5_tsan
-        rc=$?
-    fi
-else
-    # $Show $CC $CPPFLAGS $CFLAGS "${allargs[@]}" -I$includedir
-    archer
-    rc=$?
-fi
+for j in .blacklists/*.bl; do
+    name=$(echo $j | awk -F"/" '{ print $2}')
+    filename="${name%.*}"
+    objname="${filename%.*}.o"
+    $Show $CC -fopenmp -O0 -g -fPIC \
+	$INCLUDES \
+    	$VARIABLES \
+    	-I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include \
+    	-I$includedir \
+    	-fsanitize=thread -fsanitize-blacklist=.blacklists/$filename.bl \
+    	-c $DIR_NAME$filename -o $objname
+    
+    $Show rm -rf *.ll *.bc
+done
 
 exit $rc

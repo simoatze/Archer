@@ -3,12 +3,15 @@
 
 #define MAX 120
 
-void fun() {}
+int a;
+
+void fun() {
+  a = 0;
+}
 
 int main(int argc, char **argv) 
 {
   int x[MAX], y[MAX];
-  int a;
 
 #pragma omp parallel for
   for (int i = 1; i < MAX; ++i) {
@@ -20,7 +23,7 @@ int main(int argc, char **argv)
   for (int i = 0; i < MAX; ++i) {
     y[i] = y[i] + 1;
   }
-
+  
   fun();
 
 #pragma omp parallel for

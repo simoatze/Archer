@@ -1,0 +1,46 @@
+diff --git a/lib/tsan/rtl/tsan_interceptors.cc b/lib/tsan/rtl/tsan_interceptors.cc
+index 100834e..af42ce6 100644
+--- a/lib/tsan/rtl/tsan_interceptors.cc
++++ b/lib/tsan/rtl/tsan_interceptors.cc
+@@ -68,6 +68,7 @@ const int PTHREAD_MUTEX_RECURSIVE = 1;
+ const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
+ const int EINVAL = 22;
+ const int EBUSY = 16;
++const int ESRCH = 3;
+ const int EOWNERDEAD = 130;
+ const int EPOLL_CTL_ADD = 1;
+ const int SIGILL = 4;
+@@ -1871,7 +1872,21 @@ TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
+   return res;
+ }
+ 
++/*TSAN_INTERCEPTOR(int, pthread_kill, void *th, int sig) {
++  if (sig>0) return pthread_kill(th,sig);
++  SCOPED_INTERCEPTOR_RAW(pthread_kill, th, sig);
++  int tid = ThreadTid(thr, pc, (uptr)th);
++  ThreadIgnoreBegin(thr, pc);
++  int res = BLOCK_REAL(pthread_kill)(th, sig);
++  ThreadIgnoreEnd(thr, pc);
++  if (res == ESRCH) {
++    ThreadJoin(thr, pc, tid);
++  }
++  return res;
++}*/
++
+ TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
++//  SCOPED_INTERCEPTOR_RAW(pthread_kill, tid, sig);
+   SCOPED_TSAN_INTERCEPTOR(pthread_kill, tid, sig);
+   SignalContext *sctx = SigCtx(thr);
+   CHECK_NE(sctx, 0);
+@@ -1884,6 +1899,11 @@ TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
+     CHECK_EQ(sctx->int_signal_send, sig);
+     sctx->int_signal_send = prev;
+   }
++  if (sig == 0 && res == ESRCH) {
++    int rtid = ThreadTid(thr, pc, (uptr)tid);
++    (void)rtid;
++    ThreadJoin(thr, pc, rtid);
++  }
+   return res;
+ }
+ 

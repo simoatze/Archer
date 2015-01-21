@@ -15,6 +15,7 @@
 #ifndef ARCHER_DDA_H
 #define ARCHER_DDA_H
 
+#include "Common.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -35,20 +36,9 @@
 
 using namespace llvm;
 
-#define DD_LINES ".dd"
-#define BL_LINES ".bl"
-
 struct clast_name;
 namespace llvm {
   class raw_ostream;
-}
-
-template <typename T>
-std::string NumberToString ( T Number )
-{
-  std::ostringstream ss;
-  ss << Number;
-  return ss.str();
 }
 
 namespace polly {
@@ -70,7 +60,7 @@ namespace polly {
 
   ArcherDDA() : ScopPass(ID) {
       fileInitialized = false;
-      dir = ".polly";
+      dir = ".blacklists";
 
       if(llvm::sys::fs::create_directory(Twine(dir))) {
 	llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";

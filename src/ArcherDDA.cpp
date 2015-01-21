@@ -90,16 +90,18 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   	StringRef File = Loc.getFilename();
   	StringRef Dir = Loc.getDirectory();
 
+	// llvm::dbgs() << "Line: " << Line << " - File: " << File << " - Dir: " << Dir << " - Value: " << isNotDependency << "\n";
+
 	std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
 	std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
 
 	//llvm::dbgs() << File << " - " << filename.first << "\n";
 	if (File.compare(filename.first) == 0) {
 	  std::string str;
-	  // llvm::raw_string_ostream rso(str);
-	  // BI->print(rso);
+	  llvm::raw_string_ostream rso(str);
+	  BI->print(rso);
 	  
-	  //llvm::dbgs() << "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+	  // llvm::dbgs() << "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
 	  std::string string = std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
 	  // std::string string = std::to_string(Line) + "\n";
 	  if(content.find(string) == std::string::npos) {
@@ -118,7 +120,7 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   if(!isNotDependency)
     FileName = dir + "/" + filename.first.str() + DD_LINES;
   else
-    FileName = dir + "/" + filename.first.str() + BL_LINES;
+    FileName = dir + "/" + filename.first.str() + ND_LINES;
 
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
@@ -179,7 +181,7 @@ bool ArcherDDA::runOnScop(Scop &Scop)
 }
 
 char ArcherDDA::ID = 0;
-static RegisterPass<ArcherDDA> X("archer", "Archer Data Dependency Analysis for ThreadSanitizer blacklist generation", false, false);
+static RegisterPass<ArcherDDA> X("archer-dda", "Archer Data Dependency Analysis for ThreadSanitizer blacklist generation.", false, false);
 
 /*
 bool ArcherDDA::initializeFiles(polly::Scop &S) {
@@ -204,7 +206,7 @@ bool ArcherDDA::initializeFiles(polly::Scop &S) {
     return false;
   }
 
-  FileName = dir + "/" + filename.first.str() + BL_LINES;
+  FileName = dir + "/" + filename.first.str() + ND_LINES;
   
   std::string ErrInfo2;
   tool_output_file G(FileName.c_str(), ErrInfo2, llvm::sys::fs::F_Append);

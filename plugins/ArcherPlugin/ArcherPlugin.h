@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "Common.h"
+#include "CommonLLVM.h"
 
 #include <iostream>
 
@@ -38,11 +39,18 @@ namespace archer {
     SourceManager *sourceMgr;
     std::string blfilename;
     std::string ddfilename;
+    std::string lsfilename;
+    std::string fcfilename;
     DDAInfo ddaloc;
     OMPInfo omploc;
+    LSInfo lsloc;
+    LSInfo fcloc;
+    FCInfo fc;
     BLInfo blacklist;
 
     void parse(std::string pathname, bool value, std::string path, std::string filename);
+    void parse(std::string pathname, std::string path, std::string filename, LSInfo &vec);
+    void parseFCInfo(std::string pathname, std::string path, std::string filename);
     bool writeBlacklistFile();
     
   public:

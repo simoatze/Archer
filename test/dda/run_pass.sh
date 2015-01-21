@@ -16,7 +16,7 @@ export LLVM_LINK=$LLVM_PATH/llvm-link
 # LLVM pass parameters
 ######################
 export PASS=../../lib/libArcher.so
-export PASS_FLAG=archer
+export PASS_FLAG=archer-memoryusage
 rm -rf .polly
 
 ##############
@@ -25,7 +25,7 @@ rm -rf .polly
 export PROG_NAME=$1
 export EXEC_NAME="${PROG_NAME%.*}"
 
-$CLANG -DUSE_MPI=0 -emit-llvm -O0 -g -c $PROG_NAME -o $PROG_NAME.bc
+$CLANG -fopenmp -DUSE_MPI=0 -I$HOME/usr/lib/gcc/x86_64-unknown-linux-gnu/4.9.1/include -emit-llvm -O0 -g -c $PROG_NAME -o $PROG_NAME.bc
 
 ################
 # Link Program
