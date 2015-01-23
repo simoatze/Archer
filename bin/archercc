@@ -31,7 +31,7 @@
 prefix=/usr
 exec_prefix=/usr
 sysconfdir=/etc/mpich2
-includedir=/usr/include/mpich2
+includedir=/usr/local/tools/mvapich-gnu/include
 libdir=/usr/lib
 BASE=""
 GENLIB=0
@@ -107,7 +107,7 @@ C_LINKPATH_SHL=""
 CFLAGS=${CFLAGS}
 CPPFLAGS="-D_FORTIFY_SOURCE=2 "
 LDFLAGS=" -Wl,-Bsymbolic-functions -Wl,-z,relro "
-LIBS="-lopa -lmpl -lrt -lcr -lpthread -lstdc++"
+LIBS="-lopa -lmpl -lrt -lpthread -lstdc++"
 MPILIBNAME="mpich"
 PMPILIBNAME="pmpich"
 NEEDSPLIB="no"

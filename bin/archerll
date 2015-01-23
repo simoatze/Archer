@@ -31,7 +31,7 @@
 prefix=/usr
 exec_prefix=/usr
 sysconfdir=/etc/mpich2
-includedir=/usr/include/mpich2
+includedir=/usr/local/tools/mvapich-gnu/include
 libdir=/usr/lib
 
 # Default settings for compiler, flags, and libraries.

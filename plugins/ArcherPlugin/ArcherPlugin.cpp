@@ -268,6 +268,12 @@ bool ArcherDDAClassVisitor::createBlacklist()
 	}
       }
     }
+    for (std::set<std::pair<unsigned, std::string>>::iterator it3 = lsloc.line_entries.begin(); it3 != lsloc.line_entries.end(); ++it3) {
+      // llvm::dbgs() << "Lines: " << it3->first << " - " << it2->first << "\n";
+      if(it3->first >= it1->first && it3->first <= it1->second.ub_loc) {
+	lsloc.line_entries.erase(it3);
+      }
+    }
   }
 
   // for(std::set<unsigned>::iterator it = total_blacklist.begin(); it != total_blacklist.end(); it++)
