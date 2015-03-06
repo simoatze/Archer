@@ -102,8 +102,10 @@ public:
       StringRef File = Loc.getFilename();
       StringRef Dir = Loc.getDirectory();
       std::pair<StringRef, StringRef> filename = StringRef(M->getModuleIdentifier()).rsplit('.');
-      if(File.compare(filename.first) == 0) {
+      // if(File.compare(filename.first) == 0) {
+      if(true) {
 	val = NumberToString<unsigned>(Line) + "," + FunctionName + "," + File.str() + "," + Dir.str() + "\n";
+	errs() << val << "\n";
 	if(content->find(val) == std::string::npos) {
 	  *content += val;	
 	}

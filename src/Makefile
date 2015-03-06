@@ -3,7 +3,7 @@ include ../Makefile.config
 BIN_DIR 	= ../bin
 LIB_DIR 	= ../lib
 PROG		= libArcher.so
-SRC_FILES	= ArcherDDA.cpp LoadsStoresList.cpp
+SRC_FILES	= ArcherDDA.cpp LoadsStoresList.cpp InstructionContext.cpp
 
 O_FILES		= $(SRC_FILES:%.cpp=%.o)
 
