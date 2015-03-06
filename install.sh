@@ -135,7 +135,7 @@ cd ${LLVM_BUILD}
 export CC=gcc
 export CXX=g++
 cmake -D CMAKE_INSTALL_PREFIX:PATH=${LLVM_INSTALL} -D CMAKE_PREFIX_PATH=${CLOOG_INSTALL} -D LINK_POLLY_INTO_TOOLS:Bool=ON ${LLVM_SRC}
-make -j${PROCS} -l${PROCS}
+make [REQUIRES_RTTI=1]* -j${PROCS} -l${PROCS}
 echoc "Building Archer Plugins..."
 make ArcherPlugin
 cp ${LLVM_BUILD}/lib/ArcherPlugin.so ${LLVM_INSTALL}/lib
