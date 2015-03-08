@@ -1,24 +1,22 @@
 /**
- * InstructionContext.h
+ * InstructionContext.cpp
  *
  * Created on: Feb 28, 2015
  *     Author: Simone Atzeni
- *    Contact: ilaguna@llnl.gov, simone@cs.utah.edu
+ *    Contact: simone@cs.utah.edu
  *
  *
  */
 
 #include "InstructionContext.h"
 
-bool InstructionContext::writeFile(std::string modulename, std::string ext, std::string &content)
+bool InstructionContext::writeFile(std::string header, std::string filename, std::string ext, std::string &content)
 {
-  std::pair<StringRef, StringRef> filename = StringRef(modulename).rsplit('.');
-  std::string FileName;
-  FileName = dir + "/" + filename.first.str() + ext;
-  content = "# Module:" + filename.first.str() + "\n" + content;
+  content = header + "\n" + content;
   
   std::string ErrInfo;
-  tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
+  std::string FileName = filename + ext;
+  tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_RW);
   
   if (ErrInfo.empty()) {
     F.os() << content;
@@ -37,84 +35,66 @@ bool InstructionContext::writeFile(std::string modulename, std::string ext, std:
 
 void InstructionContext::getAnalysisUsage(AnalysisUsage &AU) const
 {
-  AU.setPreservesAll();
-  AU.addRequired<CallGraphWrapperPass>();
+  // AU.setPreservesAll();
+  // AU.addRequired<CallGraphWrapperPass>();
 }
 
-/// Attempts to instrument the given instructions. It instruments "only"
-/// instructions in which we can find debugging meta-data to obtain line
-/// number information. Returns the number of instrumented instructions.
-void InstructionContext::visitCallGraph(Instruction *I, Function *F, Module *M, CallGraph &CG)
+std::string InstructionContext::getInfoInstruction(Instruction *I, std::string header)
 {
-  if(F->getName().find("omp_microtask") != std::string::npos) {
-    getInfoInstruction(I, F, M, true);
-    return;
-  } else if(F->getName().find("main") != std::string::npos) {
-    getInfoInstruction(I, F, M, false);
-    return;
+  std::string str;
+  
+  MDNode *N = I->getMetadata("dbg");
+  if (N) {
+    DILocation Loc(N);
+    unsigned Line = Loc.getLineNumber();
+    StringRef File = Loc.getFilename();
+    StringRef Dir = Loc.getDirectory();
+    
+    str = NumberToString<unsigned>(Line) + "," + I->getParent()->getParent()->getName().str() + "," + File.str() + "," + Dir.str();
+    
+    // errs() << header << str << "\n";
+    
+    return str;
   }
-  
-  // Get the call graph node for the function containing the call.
-  CallGraphNode *CGN = CG[F];
-  
-  errs() << "Visiting CallGraph for Function: " << F->getName() << " and Module: " << M->getModuleIdentifier() << "\n";
-  
-  // Wrong this is the list of called function
-  for (CallGraphNode::iterator ti = CGN->begin(); ti != CGN->end(); ++ti) {
-    errs() << "For: Visiting CallGraph for Function: " << F->getName() << " and Module: " << M->getModuleIdentifier() << "\n";
-    Function *f = ti->second->getFunction();
-    if(f != NULL) {
-      getInfoInstruction(I, f, M, true);
+ 
+  // errs() << "No debugging information found. Make sure you are compiling with \"-g\" flag.\n";
+  return "";
+  // exit(-1);
+}
+
+std::string InstructionContext::getInfoFunction(Function *F, std::string header)
+{
+  std::string str;
+
+  for (auto BB = F->begin(), ii = F->end(); BB != ii; ++BB) {
+    for (auto I = BB->begin(), iii = BB->end(); I != iii; ++I) {
+      MDNode *N = I->getMetadata("dbg");
       
-      visitCallGraph(I, f, M, CG);
+      if (N) {
+	DILocation Loc(N);
+	StringRef File = Loc.getFilename();
+	StringRef Dir = Loc.getDirectory();
+	
+	str = F->getName().str() + "," + File.str() + "," + Dir.str();
+	
+	// errs() << header << str << "\n";
+	
+	return str;
+      }
     }
   }
-}
 
-void InstructionContext::getInfoInstruction(Instruction *I, Function *F, Module *M, bool isParallel)
-{
-  MDNode *N = I->getMetadata("dbg");
-  if (N) {
-    DILocation Loc(N);
-    unsigned Line = Loc.getLineNumber();
-    StringRef File = Loc.getFilename();
-    StringRef Dir = Loc.getDirectory();
-    
-    if(isParallel)
-      errs() << "Parallel Instruction at line " << Line << " in Module " << M->getModuleIdentifier() << " in File: " << File <<"\n";
-    else
-      errs() << "Sequential Instruction at line: " << Line << " in Module " << M->getModuleIdentifier() << "\n";
-    
-    //std::pair<StringRef, StringRef> filename = StringRef(M->getModuleIdentifier()).rsplit('.');
-    // if(File.compare(filename.first) == 0) {
-    // if(true) {
-    // 	val = NumberToString<unsigned>(Line) + "," + FunctionName + "," + File.str() + "," + Dir.str() + "\n";
-    // 	errs() << val << "\n";
-    // 	if(content->find(val) == std::string::npos) {
-    // 	  *content += val;	
-    // 	}
-    // }
-  }
-}
-
-void InstructionContext::getInfoInstruction(Instruction *I, std::string val)
-{
-  MDNode *N = I->getMetadata("dbg");
-  
-  if (N) {
-    DILocation Loc(N);
-    unsigned Line = Loc.getLineNumber();
-    StringRef File = Loc.getFilename();
-    StringRef Dir = Loc.getDirectory();
-    
-    errs() << val << " Instruction at line " << Line << " in Function " << I->getParent()->getParent()->getName() << " in File: " << File <<"\n";
-  }
+  // errs() << "No debugging information found. Make sure you are compiling with \"-g\" flag.\n";
+  return "";
+  // exit(-1);
 }
 
 bool InstructionContext::runOnModule(Module &M)
 {
-  std::string ModuleName = M.getModuleIdentifier();
-  
+  std::string content;
+  std::string str;
+  //std::string ModuleName = M.getModuleIdentifier();  
+
   // errs() << "Module Name: " << ModuleName << "\n";
   
   // For each Function in the Module
@@ -137,7 +117,7 @@ bool InstructionContext::runOnModule(Module &M)
 	  // add to the list of Parallel Instructions
 	  if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst)) {
 	    parallel_instructions.insert(Inst);
-	    errs() << "Parallel Load/Store Address: " << Inst << " from Function: " << F->getName() << "\n";
+	    // errs() << "Parallel Load/Store Address: " << Inst << " from Function: " << F->getName() << "\n";
 	    // errs() << "START - ###################\n";
 	    // getInfoInstruction(Inst, "Parallel Load/StoreSIMONE");
 	    // std::string str;
@@ -174,16 +154,21 @@ bool InstructionContext::runOnModule(Module &M)
 	  }
 	} else {
 	  if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst)) {
-	    getInfoInstruction(Inst, "Sequential Load/Store");
-	    sequential_instructions.insert(Inst);
-	    errs() << "Sequential Load/Store Address: " << Inst << " from Function: " << F->getName() << "\n";
+	    // insert instruction in list of sequential instructions
+	    // only if it is not already in the list of
+	    // parallel instructions
+	    // This check here is probably not needed
+	    std::set<Instruction *>::iterator it = parallel_instructions.find(Inst);
+	    if(it == parallel_instructions.end()) {
+	      sequential_instructions.insert(Inst);
+	    }
 	  }
 	}
       }
     }
   }
 
-  errs() << "Analyzing Queue...\n";
+  // errs() << "Analyzing Queue...\n";
   
   // For each function in the Queue of Parallel Functions
   while (!parallel_functions.empty()) {
@@ -191,7 +176,7 @@ bool InstructionContext::runOnModule(Module &M)
     visited_functions.insert(F);
     
     // Visit Instructions
-    errs() << "Analyzing function: " << F->getName() << "\n";
+    // errs() << "Analyzing function: " << F->getName() << "\n";
     for (auto BB = F->begin(), ii = F->end(); BB != ii; ++BB) {
       for (auto I = BB->begin(), iii = BB->end(); I != iii; ++I) {
 	Instruction *Inst = &(*I);
@@ -199,23 +184,18 @@ bool InstructionContext::runOnModule(Module &M)
 	// If the instruction is a Load/Store
 	// add to the list of Parallel Instructions
 	if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst)) {
-	  getInfoInstruction(Inst, "Load/Store");
-	  std::set<Instruction *>::iterator it = sequential_instructions.find(Inst);
 	  parallel_instructions.insert(Inst);
-	  if(it == sequential_instructions.end()) {
-	    parallel_instructions.insert(Inst);
-	  } else {
-	    parallel_instructions.insert(Inst);
+	  std::set<Instruction *>::iterator it = sequential_instructions.find(Inst);
+	  if(it != sequential_instructions.end()) {
 	    sequential_instructions.erase(it);
 	  }
-	  errs() << "Parallel Load/Store Address: " << Inst << " from Function: " << F->getName() << "\n";
+	  // errs() << "Parallel Load/Store Address: " << Inst << " from Function: " << F->getName() << "\n";
 	}
 	
 	// If the instruction is a function call
 	// And is not in the list of visited function
 	// Insert Function in Queue of parallel functions
 	if(isa<CallInst>(Inst)) {
-	  getInfoInstruction(Inst, "Call");
 	  Function *f = cast<CallInst>(Inst)->getCalledFunction();
 	  
 	  if(f == NULL) {
@@ -232,7 +212,7 @@ bool InstructionContext::runOnModule(Module &M)
 	  }
 	  if(f != NULL) {
 	    if(visited_functions.find(f) == visited_functions.end()) {
-	      errs() << "Inserting function call: " << f->getName() << " from function: " << F->getName() << "\n";
+	      // errs() << "Inserting function call: " << f->getName() << " from function: " << F->getName() << "\n";
 	      parallel_functions.push(f);
 	    }
 	  }
@@ -243,53 +223,37 @@ bool InstructionContext::runOnModule(Module &M)
     parallel_functions.pop();
   }
 
-  errs() << "Parallel Instructions\n";
+  std::string filename = dir + "/" + StringRef(M.getModuleIdentifier()).rsplit('.').first.str();
 
+  content = "";
+  errs() << "Generating Parallel Instructions file...\n";
   for(auto Inst : parallel_instructions) {
-    getInfoInstruction(Inst, "Parallel");
+    str = getInfoInstruction(Inst, "Parallel Instruction: ");
+    if(!str.empty() && content.find(str) == std::string::npos) {
+      content += str + "\n";
+    }
   }
+  writeFile("# Parallel Instructions", filename, PI_LINES, content);
 
-  errs() << "\n";
-  errs() << "Sequential Instructions\n";
-
+  content = "";
+  errs() << "Generating Sequential Instructions file...\n";
   for(auto Inst : sequential_instructions) {
-    getInfoInstruction(Inst, "Sequential");
+    str = getInfoInstruction(Inst, "Sequential Instruction: ");
+    if(!str.empty() && content.find(str) == std::string::npos) {
+      content += str + "\n";
+    }
   }
+  writeFile("# Sequential Instructions", filename, SI_LINES, content);
 
-  errs() << "\n";
-  errs() << "SequentialParallel Instructions\n";
-
-  for(auto Inst : seqpar_instructions) {
-    getInfoInstruction(Inst, "SequentialParallel");
-  }    
-    
-  // CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
-    
-  // for (auto F = M.begin(), i = M.end(); F != i; ++F) {
-  //   // Discard function declarations
-  //   if (F->isDeclaration())
-  //    	continue;
-	
-  //   for (auto BB = F->begin(), ii = F->end(); BB != ii; ++BB) {
-  // 	for (auto I = BB->begin(), iii = BB->end(); I != iii; ++I) {
-  // 	  Instruction *Inst = &(*I);
-
-	  
-  // 	  if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst)) {
-  // 	    getInfoInstruction(Inst, F, &M, true);
-  // 	    if(isa<CallInst>(Inst)) {
-  // 	      if(cast<CallInst>(Inst)->getCalledFunction() != NULL) {
-  // 	      }
-  // 	    }
-  // 	   }
-  // 	}
-  //   }
-  // }
-
-  // std::string ModuleName = M.getModuleIdentifier();
-
-  // writeFile(ModuleName, LS_LINES, ls_content);
-  // writeFile(ModuleName, FC_LINES, fc_content);
+  content = "";
+  errs() << "Generating Parallel Functions file...\n";
+  for(auto Func : visited_functions) {
+    str = getInfoFunction(Func, "Parallel Function: ");
+    if(!str.empty() && content.find(str) == std::string::npos) {
+      content += str + "\n";
+    }
+  }
+  writeFile("# Parallel Functions", filename, PF_LINES, content);
 
   return true;
 }

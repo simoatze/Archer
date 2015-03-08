@@ -3,7 +3,7 @@
  *
  * Created on: Feb 28, 2015
  *     Author: Simone Atzeni
- *    Contact: ilaguna@llnl.gov, simone@cs.utah.edu
+ *    Contact: simone@cs.utah.edu
  *
  *
  */
@@ -58,12 +58,12 @@ namespace {
     /**
      * Queue of parallel functions
      */
-    std::queue<Value *> parallel_functions;
+    std::queue<Function *> parallel_functions;
 
     /**
      * List of Visited Functions 
      */
-    std::set<Value *> visited_functions;
+    std::set<Function *> visited_functions;
 
     /**
      * List of Parallel Instructions
@@ -75,23 +75,14 @@ namespace {
      */
     std::set<Instruction *> sequential_instructions;
 
-    /**
-     * List of Instruction executed both in parallel and sequentially
-     */
-    std::set<Instruction *> seqpar_instructions;
-
-    std::string ls_content;
-    std::string fc_content;
     std::string dir;
   
-    bool writeFile(std::string modulename, std::string ext, std::string &content);
+    bool writeFile(std::string header, std::string filename, std::string ext, std::string &content);
 
   public:
     static char ID;
   
   InstructionContext() : ModulePass(ID) {
-      ls_content = "";
-      fc_content = "";
       dir = ".blacklists";
 
       if(llvm::sys::fs::create_directory(Twine(dir))) {
@@ -100,16 +91,11 @@ namespace {
       }
     }
 
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    std::string getInfoInstruction(Instruction *I, std::string header = "");
+    std::string getInfoFunction(Function *F, std::string header = "");
 
-    /// Attempts to instrument the given instructions. It instruments "only"
-    /// instructions in which we can find debugging meta-data to obtain line
-    /// number information. Returns the number of instrumented instructions.
-    void visitCallGraph(Instruction *I, Function *F, Module *M, CallGraph &CG);
-
-    void getInfoInstruction(Instruction *I, Function *F, Module *M, bool isParallel);
-    void getInfoInstruction(Instruction *I, std::string val);
-  
     virtual bool runOnModule(Module &M);
   
   };

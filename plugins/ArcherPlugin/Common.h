@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define PI_LINES ".pi" // Parallel instructions
+#define SI_LINES ".si" // Sequential instructions
+#define PF_LINES ".pf" // Parallel functions
 #define DD_LINES ".dd" // Data dependency
 #define ND_LINES ".nd" // No data dependency
 #define FC_LINES ".fc" // Functions call within an OpenMP construct
