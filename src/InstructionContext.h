@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-#include "Common.h"
+//#include "Common.h"
 #include "CommonLLVM.h"
 
 using namespace llvm;
@@ -93,8 +93,8 @@ namespace {
 
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    std::string getInfoInstruction(Instruction *I, std::string header = "");
-    std::string getInfoFunction(Function *F, std::string header = "");
+    std::string getInfoInstruction(std::string *str, Instruction *I, std::string header = "");
+    std::string getInfoFunction(std::string *str, Function *F, std::string header = "");
 
     virtual bool runOnModule(Module &M);
   

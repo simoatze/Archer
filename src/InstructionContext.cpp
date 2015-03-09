@@ -12,11 +12,12 @@
 
 bool InstructionContext::writeFile(std::string header, std::string filename, std::string ext, std::string &content)
 {
-  content = header + "\n" + content;
+  if(!header.empty())
+    content = header + "\n" + content;
   
   std::string ErrInfo;
   std::string FileName = filename + ext;
-  tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_RW);
+  tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
   
   if (ErrInfo.empty()) {
     F.os() << content;
@@ -39,10 +40,11 @@ void InstructionContext::getAnalysisUsage(AnalysisUsage &AU) const
   // AU.addRequired<CallGraphWrapperPass>();
 }
 
-std::string InstructionContext::getInfoInstruction(Instruction *I, std::string header)
+/*
+ * Store the result on str and return the filename
+ */
+std::string InstructionContext::getInfoInstruction(std::string *str, Instruction *I, std::string header)
 {
-  std::string str;
-  
   MDNode *N = I->getMetadata("dbg");
   if (N) {
     DILocation Loc(N);
@@ -50,22 +52,21 @@ std::string InstructionContext::getInfoInstruction(Instruction *I, std::string h
     StringRef File = Loc.getFilename();
     StringRef Dir = Loc.getDirectory();
     
-    str = NumberToString<unsigned>(Line) + "," + I->getParent()->getParent()->getName().str() + "," + File.str() + "," + Dir.str();
+    *str = NumberToString<unsigned>(Line) + "," + I->getParent()->getParent()->getName().str() + "," + File.str() + "," + Dir.str();
     
     // errs() << header << str << "\n";
     
-    return str;
+    return File.str();
   }
  
   // errs() << "No debugging information found. Make sure you are compiling with \"-g\" flag.\n";
+  *str = "";
   return "";
   // exit(-1);
 }
 
-std::string InstructionContext::getInfoFunction(Function *F, std::string header)
+std::string InstructionContext::getInfoFunction(std::string *str, Function *F, std::string header)
 {
-  std::string str;
-
   for (auto BB = F->begin(), ii = F->end(); BB != ii; ++BB) {
     for (auto I = BB->begin(), iii = BB->end(); I != iii; ++I) {
       MDNode *N = I->getMetadata("dbg");
@@ -75,16 +76,17 @@ std::string InstructionContext::getInfoFunction(Function *F, std::string header)
 	StringRef File = Loc.getFilename();
 	StringRef Dir = Loc.getDirectory();
 	
-	str = F->getName().str() + "," + File.str() + "," + Dir.str();
+	*str = F->getName().str() + "," + File.str() + "," + Dir.str();
 	
 	// errs() << header << str << "\n";
 	
-	return str;
+	return File.str();
       }
     }
   }
 
   // errs() << "No debugging information found. Make sure you are compiling with \"-g\" flag.\n";
+  *str = "";
   return "";
   // exit(-1);
 }
@@ -93,6 +95,7 @@ bool InstructionContext::runOnModule(Module &M)
 {
   std::string content;
   std::string str;
+  std::string filename;
   //std::string ModuleName = M.getModuleIdentifier();  
 
   // errs() << "Module Name: " << ModuleName << "\n";
@@ -223,37 +226,53 @@ bool InstructionContext::runOnModule(Module &M)
     parallel_functions.pop();
   }
 
-  std::string filename = dir + "/" + StringRef(M.getModuleIdentifier()).rsplit('.').first.str();
+  // Remove sequential instructions that are also in the parallel list
+  std::string str1, str2;
+  for(auto Inst1 : parallel_instructions) {
+    getInfoInstruction(&str1, Inst1, "");
+    std::vector<std::string> tokens1;
+    split(&tokens1, (char *) str1.c_str(), ",");
+    for (std::set<Instruction *>::iterator Inst2 = sequential_instructions.begin(); Inst2 != sequential_instructions.end(); Inst2++) {
+      getInfoInstruction(&str2, *Inst2, "");
+      std::vector<std::string> tokens2;
+      split(&tokens2, (char *) str2.c_str(), ",");
+      if((tokens1.size() >= 3) && (tokens2.size() >= 3) && tokens1[0].compare(tokens2[0]) == 0  && tokens1[2].compare(tokens2[2]) == 0) {
+	sequential_instructions.erase(Inst2);
+      }
+    }
+  }
 
-  content = "";
+  std::string filepath = dir + "/"; // + StringRef(M.getModuleIdentifier()).rsplit('.').first.str();
+
   errs() << "Generating Parallel Instructions file...\n";
   for(auto Inst : parallel_instructions) {
-    str = getInfoInstruction(Inst, "Parallel Instruction: ");
-    if(!str.empty() && content.find(str) == std::string::npos) {
-      content += str + "\n";
+    filename = getInfoInstruction(&str, Inst, "Parallel Instruction: ");
+    if(!filename.empty() && !str.empty() && content.find(str) == std::string::npos) {
+      content = str + "\n";
+      writeFile("", filepath + filename, PI_LINES, content);
+      // # Parallel Instructions
     }
   }
-  writeFile("# Parallel Instructions", filename, PI_LINES, content);
 
-  content = "";
   errs() << "Generating Sequential Instructions file...\n";
   for(auto Inst : sequential_instructions) {
-    str = getInfoInstruction(Inst, "Sequential Instruction: ");
-    if(!str.empty() && content.find(str) == std::string::npos) {
-      content += str + "\n";
+    filename = getInfoInstruction(&str, Inst, "Sequential Instruction: ");
+    if(!filename.empty() && !str.empty() && content.find(str) == std::string::npos) {
+      content = str + "\n";
+      writeFile("", filepath + filename, SI_LINES, content);
+      // # Sequential Instructions
     }
   }
-  writeFile("# Sequential Instructions", filename, SI_LINES, content);
 
-  content = "";
   errs() << "Generating Parallel Functions file...\n";
   for(auto Func : visited_functions) {
-    str = getInfoFunction(Func, "Parallel Function: ");
-    if(!str.empty() && content.find(str) == std::string::npos) {
-      content += str + "\n";
-    }
+    filename = getInfoFunction(&str, Func, "Parallel Function: ");
+    if(!filename.empty() && !str.empty() && content.find(str) == std::string::npos) {
+      content = str + "\n";
+      writeFile("", filepath + filename, PF_LINES, content);
+      // # Parallel Functions
+    } 
   }
-  writeFile("# Parallel Functions", filename, PF_LINES, content);
 
   return true;
 }

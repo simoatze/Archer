@@ -238,7 +238,8 @@ bool ArcherDDAClassVisitor::writeFile() {
   }
   
   if(!fileContent.empty()) {
-    fileContent = "# OpenMP Pragmas Information\n" + omploc.filename + "," + omploc.path + "\n" + fileContent;
+    fileContent = "# OpenMP Pragmas Information\n" + fileContent;
+    // fileContent = "# OpenMP Pragmas Information\n" + omploc.filename + "," + omploc.path + "\n" + fileContent;
     
     //llvm::dbgs() << fileContent << "\n";
     

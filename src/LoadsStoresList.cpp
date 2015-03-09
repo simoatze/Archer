@@ -31,7 +31,6 @@
 #include <string>
 #include <sstream>
 
-#include "Common.h"
 #include "CommonLLVM.h"
 
 using namespace llvm;

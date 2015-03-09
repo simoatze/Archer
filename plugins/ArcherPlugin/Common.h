@@ -11,6 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <string.h>
+#include <map>
+#include <set>
+#include <string>
+#include <sstream>
+#include <vector>
+
 #define PI_LINES ".pi" // Parallel instructions
 #define SI_LINES ".si" // Sequential instructions
 #define PF_LINES ".pf" // Parallel functions
@@ -23,3 +30,45 @@
 #define LS_LINES ".ls" // Lines of code that are loads/stores
 #define TB_LINES ".tb" // Temporary blacklist
 #define BL_LINES ".bl" // Blacklists
+
+struct OMPStmt {
+  unsigned pragma_loc;
+  unsigned lb_loc;
+  unsigned ub_loc;
+  std::string stmt_class;
+
+  OMPStmt(unsigned pr, unsigned lb, unsigned ub, std::string scl) {
+    pragma_loc = pr;
+    lb_loc = lb;
+    ub_loc = ub;
+    stmt_class = scl;
+  }
+};
+
+template <typename T>
+std::string NumberToString ( T Number )
+{
+  std::ostringstream ss;
+  ss << Number;
+  return ss.str();
+}
+
+template <typename T>
+T StringToNumber ( std::string str )
+{
+  std::istringstream ss(str);
+  T val;
+  ss >> val;
+  return val;
+}
+
+
+void split(std::vector<std::string> *tokens, char *str, std::string split_value)
+{
+  char *pch = strtok(str, split_value.c_str());
+  while (pch != NULL)
+  {
+    tokens->push_back(std::string(pch));
+    pch = strtok(NULL, split_value.c_str());
+  }
+}

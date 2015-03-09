@@ -11,13 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <map>
-#include <set>
-#include <string>
-#include <sstream>
-#include <vector>
-
 #include "clang/AST/Stmt.h"
+#include "Common.h"
 
 inline const char* ToString(clang::Stmt::StmtClass v) {
   switch (v) {
@@ -212,20 +207,6 @@ struct DDAInfo {
   std::map<unsigned, bool> line_entries;
 };
 
-struct OMPStmt {
-  unsigned pragma_loc;
-  unsigned lb_loc;
-  unsigned ub_loc;
-  std::string stmt_class;
-
-  OMPStmt(unsigned pr, unsigned lb, unsigned ub, std::string scl) {
-    pragma_loc = pr;
-    lb_loc = lb;
-    ub_loc = ub;
-    stmt_class = scl;
-  }
-};
-
 struct FuncStmt {
   std::string func_name;
   unsigned lb_loc;
@@ -276,23 +257,6 @@ struct BLInfo {
   std::string filename;
   std::set<unsigned> line_entries;
 };
-
-template <typename T>
-std::string NumberToString ( T Number )
-{
-  std::ostringstream ss;
-  ss << Number;
-  return ss.str();
-}
-
-template <typename T>
-T StringToNumber ( std::string str )
-{
-  std::istringstream ss(str);
-  T val;
-  ss >> val;
-  return val;
-}
 
 struct CompareRange
 {
