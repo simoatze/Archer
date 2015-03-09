@@ -37,12 +37,15 @@ namespace archer {
   private:
     ASTContext *context;
     SourceManager *sourceMgr;
+    std::string pffilename;
+    OMPInfo omploc;
+    FuncInfo funcloc;
+
     std::string blfilename;
     std::string ddfilename;
     std::string lsfilename;
     std::string fcfilename;
     DDAInfo ddaloc;
-    OMPInfo omploc;
     LSInfo lsloc;
     LSInfo fcloc;
     FCInfo fc;
@@ -51,14 +54,14 @@ namespace archer {
     void parse(std::string pathname, bool value, std::string path, std::string filename);
     void parse(std::string pathname, std::string path, std::string filename, LSInfo &vec);
     void parseFCInfo(std::string pathname, std::string path, std::string filename);
-    bool writeBlacklistFile();
     
   public:
     ArcherDDAClassVisitor(StringRef InFile);
     void setContext(ASTContext &context);
     void setSourceManager(SourceManager &sourceMgr);
     bool VisitStmt(clang::Stmt* stmt);
-    bool createBlacklist();
+    bool VisitFunctionDecl(FunctionDecl *f);
+    bool writeFile();
   };
 
   class ArcherDDAConsumer : public ASTConsumer

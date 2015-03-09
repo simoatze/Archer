@@ -213,14 +213,26 @@ struct DDAInfo {
 };
 
 struct OMPStmt {
-  clang::Stmt::StmtClass stmtClass;
-  unsigned num_of_stmt;
+  unsigned pragma_loc;
+  unsigned lb_loc;
+  unsigned ub_loc;
+  std::string stmt_class;
+
+  OMPStmt(unsigned pr, unsigned lb, unsigned ub, std::string scl) {
+    pragma_loc = pr;
+    lb_loc = lb;
+    ub_loc = ub;
+    stmt_class = scl;
+  }
+};
+
+struct FuncStmt {
+  std::string func_name;
   unsigned lb_loc;
   unsigned ub_loc;
 
-OMPStmt(clang::Stmt::StmtClass scl, unsigned nos, unsigned lb, unsigned ub) {
-    stmtClass = scl;
-    num_of_stmt = nos;
+  FuncStmt(std::string fn, unsigned lb, unsigned ub) {
+    func_name = fn;
     lb_loc = lb;
     ub_loc = ub;
   }
@@ -235,7 +247,16 @@ struct OMPInfo {
   std::string path;
   std::string filename;
   // pragma LOC + range of CapturedStmt
-  std::set<std::pair<unsigned, OMPStmt>> omp_range;
+  // std::vector<std::pair<unsigned, OMPStmt>> omp_range;
+  std::vector<OMPStmt> omp_stmt;
+};
+
+struct FuncInfo {
+  std::string path;
+  std::string filename;
+  // pragma LOC + range of CapturedStmt
+  // std::vector<std::pair<unsigned, OMPStmt>> omp_range;
+  std::vector<FuncStmt> func_stmt;
 };
 
 struct LSInfo {
