@@ -84,10 +84,10 @@ int main(int argc, char **argv)
       for (std::map<int, std::string>::iterator it = ndd_info.begin(); it != ndd_info.end(); ++it) {
     	if((it->first >= omp_stmt[i].lb_loc) && (it->first <= omp_stmt[i].ub_loc)) {
     	  int pos = it->second.find(",");
-    	  std::string pragma = NumberToString<unsigned>(omp_stmt[i].pragma_loc) + "," + it->second.substr(pos + 1);
+    	  std::string pragma = "line:" + NumberToString<unsigned>(omp_stmt[i].pragma_loc) + "," + it->second.substr(pos + 1);
     	  if(content.find(pragma) == std::string::npos)
     	    content += pragma + "\n";
-    	  content += it->second + "\n";
+    	  content += "line:" + it->second + "\n";
     	  ndd_info.erase(it);
     	  continue;
     	}
