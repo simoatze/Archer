@@ -29,8 +29,8 @@
 #include <string>
 #include <vector>
 
-//#include "Common.h"
 #include "CommonLLVM.h"
+#include "Util.h"
 
 using namespace llvm;
 
@@ -76,7 +76,8 @@ namespace {
     std::set<Instruction *> sequential_instructions;
 
     std::string dir;
-  
+
+    void createDir(std::string dir);
     bool writeFile(std::string header, std::string filename, std::string ext, std::string &content);
 
   public:
@@ -84,11 +85,7 @@ namespace {
   
   InstructionContext() : ModulePass(ID) {
       dir = ".blacklists";
-
-      if(llvm::sys::fs::create_directory(Twine(dir))) {
-	llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
-	exit(-1);
-      }
+      createDir(dir);
     }
 
 

@@ -44,31 +44,3 @@ struct OMPStmt {
     stmt_class = scl;
   }
 };
-
-template <typename T>
-std::string NumberToString ( T Number )
-{
-  std::ostringstream ss;
-  ss << Number;
-  return ss.str();
-}
-
-template <typename T>
-T StringToNumber ( std::string str )
-{
-  std::istringstream ss(str);
-  T val;
-  ss >> val;
-  return val;
-}
-
-
-void split(std::vector<std::string> *tokens, char *str, std::string split_value)
-{
-  char *pch = strtok(str, split_value.c_str());
-  while (pch != NULL)
-  {
-    tokens->push_back(std::string(pch));
-    pch = strtok(NULL, split_value.c_str());
-  }
-}

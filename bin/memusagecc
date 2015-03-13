@@ -1,0 +1,14 @@
+#!/bin/bash
+
+FILENAME="${1%.*}"
+
+$CC $CFLAGS -fopenmp -emit-llvm -O0 -g -c $FILENAME.c -o $FILENAME.init.bc
+$CC -emit-llvm -O0 -g -c $INST_FUNCTIONS -o $INST_FUNCTIONS.bc
+$LLVM_LINK -o $FILENAME.bc $FILENAME.init.bc $INST_FUNCTIONS.bc
+$OPT -mem2reg $FILENAME.bc -o $FILENAME.opt
+mv $FILENAME.opt $FILENAME.bc
+$LLVM_DIS -f $FILENAME.bc -o $PROG_NAME.ll
+$OPT -load liblinememusage.so -memory_usage $FILENAME.bc -o $FILENAME-optimized.bc
+$LLVM_DIS -f $FILENAME-optimized.bc -o $FILENAME-optimized.ll
+$LLC $FILENAME-optimized.bc
+$CC $FILENAME-optimized.s -O0 -c -o $FILENAME.o

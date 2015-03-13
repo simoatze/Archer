@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "CommonLLVM.h"
+#include "Util.h"
 
 #include <iostream>
 

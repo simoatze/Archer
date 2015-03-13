@@ -15,7 +15,8 @@
 #ifndef ARCHER_DDA_H
 #define ARCHER_DDA_H
 
-#include "Common.h"
+#include "CommonLLVM.h"
+#include "Util.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -51,6 +52,7 @@ namespace polly {
     Scop *S;
     bool fileInitialized;
 
+    void createDir(std::string dir);
     bool getLOCInfo(Scop &Scop, bool isDependency);
     bool initializeFiles(polly::Scop &Scop);
 
@@ -61,11 +63,7 @@ namespace polly {
   ArcherDDA() : ScopPass(ID) {
       fileInitialized = false;
       dir = ".blacklists";
-
-      if(llvm::sys::fs::create_directory(Twine(dir))) {
-	llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
-        exit(-1);
-      }
+      createDir(dir);
     }
     
     bool runOnScop(Scop &S);

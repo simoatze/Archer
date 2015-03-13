@@ -10,6 +10,13 @@
 
 #include "InstructionContext.h"
 
+void InstructionContext::createDir(std::string dir) {
+  if(llvm::sys::fs::create_directory(Twine(dir))) {
+    llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
+    exit(-1);
+  }
+}
+
 bool InstructionContext::writeFile(std::string header, std::string filename, std::string ext, std::string &content)
 {
   if(!header.empty())
@@ -18,7 +25,7 @@ bool InstructionContext::writeFile(std::string header, std::string filename, std
   std::string ErrInfo;
   std::string FileName = filename + ext;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
-  
+
   if (ErrInfo.empty()) {
     F.os() << content;
     F.os().close();
@@ -26,7 +33,7 @@ bool InstructionContext::writeFile(std::string header, std::string filename, std
       F.keep();
     }
   } else {    
-    errs() << "error opening file for writing!\n";
+    errs() << "error opening file " << FileName << " for writing!\n";
     F.os().clear_error();
     return false;
   }
@@ -56,7 +63,10 @@ std::string InstructionContext::getInfoInstruction(std::string *str, Instruction
     
     // errs() << header << str << "\n";
     
-    return File.str();
+    if(File.str().substr(0,2).compare("./") == 0)
+      return Dir.str() + "/" + File.str().substr(2);
+    else
+      return Dir.str() + "/" + File.str();
   }
  
   // errs() << "No debugging information found. Make sure you are compiling with \"-g\" flag.\n";
@@ -80,7 +90,10 @@ std::string InstructionContext::getInfoFunction(std::string *str, Function *F, s
 	
 	// errs() << header << str << "\n";
 	
-	return File.str();
+	if(File.str().substr(0,2).compare("./") == 0)
+	  return Dir.str() + "/" + File.str().substr(2);
+	else
+	  return Dir.str() + "/" + File.str();
       }
     }
   }
@@ -94,6 +107,8 @@ std::string InstructionContext::getInfoFunction(std::string *str, Function *F, s
 bool InstructionContext::runOnModule(Module &M)
 {
   std::string content;
+  std::string pcontent;
+  std::string scontent;
   std::string str;
   std::string filename;
   //std::string ModuleName = M.getModuleIdentifier();  
@@ -110,6 +125,7 @@ bool InstructionContext::runOnModule(Module &M)
 	 continue;
    
     // For Each BasicBlock in the 
+    errs() << "Analyzing OpenMP constructs...\n";
     for (auto BB = F->begin(), ii = F->end(); BB != ii; ++BB) {
       for (auto I = BB->begin(), iii = BB->end(); I != iii; ++I) {
 	Instruction *Inst = &(*I);
@@ -171,10 +187,11 @@ bool InstructionContext::runOnModule(Module &M)
     }
   }
 
-  // errs() << "Analyzing Queue...\n";
+  errs() << "Analyzing Queue...\n";
   
   // For each function in the Queue of Parallel Functions
   while (!parallel_functions.empty()) {
+    errs() << "Function to analyze: " << parallel_functions.size() << "\n";
     Function *F = (Function *) parallel_functions.front();
     visited_functions.insert(F);
     
@@ -226,30 +243,36 @@ bool InstructionContext::runOnModule(Module &M)
     parallel_functions.pop();
   }
 
+  // Too slow, solved with accumulation variable
   // Remove sequential instructions that are also in the parallel list
-  std::string str1, str2;
-  for(auto Inst1 : parallel_instructions) {
-    getInfoInstruction(&str1, Inst1, "");
-    std::vector<std::string> tokens1;
-    split(&tokens1, (char *) str1.c_str(), ",");
-    for (std::set<Instruction *>::iterator Inst2 = sequential_instructions.begin(); Inst2 != sequential_instructions.end(); Inst2++) {
-      getInfoInstruction(&str2, *Inst2, "");
-      std::vector<std::string> tokens2;
-      split(&tokens2, (char *) str2.c_str(), ",");
-      if((tokens1.size() >= 3) && (tokens2.size() >= 3) && tokens1[0].compare(tokens2[0]) == 0  && tokens1[2].compare(tokens2[2]) == 0) {
-	sequential_instructions.erase(Inst2);
-      }
-    }
-  }
+  // std::string str1, str2;
+  // for(auto Inst1 : parallel_instructions) {
+  //   getInfoInstruction(&str1, Inst1, "");
+  //   std::vector<std::string> tokens1;
+  //   split(&tokens1, (char *) str1.c_str(), ",");
+  //   for (std::set<Instruction *>::iterator Inst2 = sequential_instructions.begin(); Inst2 != sequential_instructions.end(); Inst2++) {
+  //     getInfoInstruction(&str2, *Inst2, "");
+  //     std::vector<std::string> tokens2;
+  //     split(&tokens2, (char *) str2.c_str(), ",");
+  //     if((tokens1.size() >= 3) && (tokens2.size() >= 3) && tokens1[0].compare(tokens2[0]) == 0  && tokens1[2].compare(tokens2[2]) == 0) {
+  // 	sequential_instructions.erase(Inst2);
+  //     }
+  //   }
+  // }
+  // Too slow, solved with accumulation variable
 
-  std::string filepath = dir + "/"; // + StringRef(M.getModuleIdentifier()).rsplit('.').first.str();
+  std::string path = dir + "/";
+  std::string filepath;
 
   errs() << "Generating Parallel Instructions file...\n";
   for(auto Inst : parallel_instructions) {
     filename = getInfoInstruction(&str, Inst, "Parallel Instruction: ");
-    if(!filename.empty() && !str.empty() && content.find(str) == std::string::npos) {
+    if(!filename.empty() && !str.empty() && pcontent.find(str) == std::string::npos) {
       content = str + "\n";
-      writeFile("", filepath + filename, PI_LINES, content);
+      pcontent += content;
+      filepath = StringRef(filename).rsplit('/').first.str() + "/" + path + StringRef(filename).rsplit('/').second.str();
+      createDir(StringRef(filename).rsplit('/').first.str() + "/" + path);
+      writeFile("", filepath, PI_LINES, content);
       // # Parallel Instructions
     }
   }
@@ -257,9 +280,12 @@ bool InstructionContext::runOnModule(Module &M)
   errs() << "Generating Sequential Instructions file...\n";
   for(auto Inst : sequential_instructions) {
     filename = getInfoInstruction(&str, Inst, "Sequential Instruction: ");
-    if(!filename.empty() && !str.empty() && content.find(str) == std::string::npos) {
+    if(!filename.empty() && !str.empty() && scontent.find(str) == std::string::npos && pcontent.find(str) == std::string::npos) {
       content = str + "\n";
-      writeFile("", filepath + filename, SI_LINES, content);
+      scontent += content;
+      filepath = StringRef(filename).rsplit('/').first.str() + "/" + path + StringRef(filename).rsplit('/').second.str();
+      createDir(StringRef(filename).rsplit('/').first.str() + "/" + path);
+      writeFile("", filepath, SI_LINES, content);
       // # Sequential Instructions
     }
   }
@@ -269,7 +295,9 @@ bool InstructionContext::runOnModule(Module &M)
     filename = getInfoFunction(&str, Func, "Parallel Function: ");
     if(!filename.empty() && !str.empty() && content.find(str) == std::string::npos) {
       content = str + "\n";
-      writeFile("", filepath + filename, PF_LINES, content);
+      filepath = StringRef(filename).rsplit('/').first.str() + "/" + path + StringRef(filename).rsplit('/').second.str();
+      createDir(StringRef(filename).rsplit('/').first.str() + "/" + path);
+      writeFile("", filepath, PF_LINES, content);
       // # Parallel Functions
     } 
   }

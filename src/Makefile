@@ -3,7 +3,7 @@ include ../Makefile.config
 BIN_DIR 	= ../bin
 LIB_DIR 	= ../lib
 PROG		= libArcher.so
-SRC_FILES	= ArcherDDA.cpp LoadsStoresList.cpp InstructionContext.cpp
+SRC_FILES	= Util.cpp ArcherDDA.cpp LoadsStoresList.cpp InstructionContext.cpp
 
 O_FILES		= $(SRC_FILES:%.cpp=%.o)
 
@@ -17,10 +17,10 @@ $(PROG): $(O_FILES)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(LIB_DIR)/$(PROG) $(SHARED_LIB_OPT) $(O_FILES)
 
 archer-cmp:
-	$(CXX) $(CPPFLAGS) -o $(BIN_DIR)/archer-cmp archer-cmp.cpp
+	$(CXX) $(CPPFLAGS) -o $(BIN_DIR)/archer-cmp archer-cmp.cpp Util.o
 
 archer-bl:
-	$(CXX) $(CPPFLAGS) -o $(BIN_DIR)/archer-bl archer-bl.cpp
+	$(CXX) $(CPPFLAGS) -o $(BIN_DIR)/archer-bl archer-bl.cpp Util.o
 
 clean:
-	$(RM) -rf *.o $(LIB_DIR) $(BIN_DIR)/archer-cmp
+	$(RM) -rf *.o $(LIB_DIR) $(BIN_DIR)/archer-cmp $(BIN_DIR)/archer-bl

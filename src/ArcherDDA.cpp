@@ -54,6 +54,13 @@ static int getSingleMap(__isl_take isl_map *map, void *user) {
 }
 */
 
+void ArcherDDA::createDir(std::string dir) {
+  if(llvm::sys::fs::create_directory(Twine(dir))) {
+    llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
+    exit(-1);
+  }
+}
+
 void ArcherDDA::getAnalysisUsage(AnalysisUsage &AU) const
 {
   ScopPass::getAnalysisUsage(AU);
@@ -114,13 +121,19 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
     }
   }
 
+  std::string path = dir + "/";
   std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
   std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
-  std::string FileName;
+  std::string FileName = filename.first.str();
+  if(FileName.substr(0,2).compare("./") == 0)
+    FileName = FileName.substr(2);
+  std::string filepath = StringRef(FileName).rsplit('/').first.str() + "/" + path + StringRef(FileName).rsplit('/').second.str();
+  createDir(StringRef(FileName).rsplit('/').first.str() + "/" + path);
+ 
   if(!isNotDependency)
-    FileName = dir + "/" + filename.first.str() + DD_LINES;
+    FileName = filepath + DD_LINES;
   else
-    FileName = dir + "/" + filename.first.str() + ND_LINES;
+    FileName = filepath + ND_LINES;
 
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
@@ -132,7 +145,7 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
       F.keep();
     }
   } else {    
-    errs() << "error opening file for writing!\n";
+    errs() << "error opening file " << FileName << " for writing!\n";
     F.os().clear_error();
     return false;
   }
@@ -201,7 +214,7 @@ bool ArcherDDA::initializeFiles(polly::Scop &S) {
       F.keep();
     }
   } else {    
-    errs() << "error opening file for writing!\n";
+    errs() << "error opening file " << FileName << " for writing!\n";
     F.os().clear_error();
     return false;
   }
@@ -218,7 +231,7 @@ bool ArcherDDA::initializeFiles(polly::Scop &S) {
       G.keep();
     }
   } else {    
-    errs() << "error opening file for writing!\n";
+    errs() << "error opening file " << FileName << " for writing!\n";
     G.os().clear_error();
     return false;
   }

@@ -13,6 +13,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "Common.h"
+#include "Util.h"
 
 using namespace boost::algorithm;
 
@@ -29,7 +30,15 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
-  std::string filename = ".blacklists/" + std::string(argv[1]);
+
+  std::string file = std::string(argv[1]);
+  
+  if(file.substr(0,2).compare("./") == 0)
+    file = file.substr(2);
+
+  std::vector<std::string> tokens;
+  split(tokens, file, is_any_of("/"));
+  std::string filename = file.substr(0, file.size() - tokens.back().size()) + ".blacklists/" + tokens.back();
   unsigned option = StringToNumber<unsigned>(argv[2]);
 
   // Sequential Instructions
@@ -102,6 +111,7 @@ int main(int argc, char **argv)
     std::cerr << "Couldn't open " << blfilename << std::endl;
     exit(-1);
   }
+  blfile << "# Blacklist file\n";
   if(!content.empty())
     blfile << content << "\n";
   blfile.close();

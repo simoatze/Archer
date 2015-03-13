@@ -32,6 +32,7 @@
 #include <sstream>
 
 #include "CommonLLVM.h"
+#include "Util.h"
 
 using namespace llvm;
 
@@ -100,7 +101,7 @@ public:
       unsigned Line = Loc.getLineNumber();
       StringRef File = Loc.getFilename();
       StringRef Dir = Loc.getDirectory();
-      std::pair<StringRef, StringRef> filename = StringRef(M->getModuleIdentifier()).rsplit('.');
+      // std::pair<StringRef, StringRef> filename = StringRef(M->getModuleIdentifier()).rsplit('.');
       // if(File.compare(filename.first) == 0) {
       if(true) {
 	val = NumberToString<unsigned>(Line) + "," + FunctionName + "," + File.str() + "," + Dir.str() + "\n";
