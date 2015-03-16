@@ -103,20 +103,20 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
 	std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
 
 	// llvm::dbgs() << File << " - " << filename.first << "\n";
-	if (File.compare(filename.first) == 0) {
-	  std::string str;
-	  llvm::raw_string_ostream rso(str);
-	  BI->print(rso);
-	  
-	  // llvm::dbgs() << "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
-	  std::string string = std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
-	  // std::string string = std::to_string(Line) + "\n";
-	  if(content.find(string) == std::string::npos) {
-	    content += string;
-	    DEBUG(llvm::dbgs() << content << "\n");
-	  }
-	  DEBUG(llvm::dbgs() << File << " - Ignoring Line[" << Line << "]\n");
+	// if (File.compare(filename.first) == 0) {
+	std::string str;
+	llvm::raw_string_ostream rso(str);
+	BI->print(rso);
+	
+	// llvm::dbgs() << "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+	std::string string = std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
+	// std::string string = std::to_string(Line) + "\n";
+	if(content.find(string) == std::string::npos) {
+	  content += string;
+	  DEBUG(llvm::dbgs() << content << "\n");
 	}
+	DEBUG(llvm::dbgs() << File << " - Ignoring Line[" << Line << "]\n");
+	//}
       }
     }
   }
