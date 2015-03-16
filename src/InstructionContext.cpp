@@ -13,7 +13,7 @@
 void InstructionContext::createDir(std::string dir) {
   if(llvm::sys::fs::create_directory(Twine(dir))) {
     llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
-    exit(-1);
+    //exit(-1);
   }
 }
 
@@ -270,8 +270,13 @@ bool InstructionContext::runOnModule(Module &M)
     if(!filename.empty() && !str.empty() && pcontent.find(str) == std::string::npos) {
       content = str + "\n";
       pcontent += content;
-      filepath = StringRef(filename).rsplit('/').first.str() + "/" + path + StringRef(filename).rsplit('/').second.str();
-      createDir(StringRef(filename).rsplit('/').first.str() + "/" + path);
+      if(StringRef(filename).rsplit('/').second.str().empty()) {
+	filepath = path + StringRef(filename).rsplit('/').first.str();
+	createDir(path);
+      } else {
+	filepath = StringRef(filename).rsplit('/').first.str() + "/" + path + StringRef(filename).rsplit('/').second.str();
+	createDir(StringRef(filename).rsplit('/').first.str() + "/" + path);
+      }
       writeFile("", filepath, PI_LINES, content);
       // # Parallel Instructions
     }

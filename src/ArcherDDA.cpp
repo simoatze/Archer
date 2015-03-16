@@ -57,7 +57,7 @@ static int getSingleMap(__isl_take isl_map *map, void *user) {
 void ArcherDDA::createDir(std::string dir) {
   if(llvm::sys::fs::create_directory(Twine(dir))) {
     llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
-    exit(-1);
+    // exit(-1);
   }
 }
 
@@ -127,13 +127,21 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   std::string FileName = filename.first.str();
   if(FileName.substr(0,2).compare("./") == 0)
     FileName = FileName.substr(2);
-  std::string filepath = StringRef(FileName).rsplit('/').first.str() + "/" + path + StringRef(FileName).rsplit('/').second.str();
-  createDir(StringRef(FileName).rsplit('/').first.str() + "/" + path);
- 
-  if(!isNotDependency)
-    FileName = filepath + DD_LINES;
-  else
+  std::string filepath;
+
+  if(StringRef(FileName).rsplit('/').second.str().empty()) {
+    filepath = path + StringRef(FileName).rsplit('/').first.str();
+    createDir(path);
+  } else {
+    filepath = StringRef(FileName).rsplit('/').first.str() + "/" + path + StringRef(FileName).rsplit('/').second.str();
+    createDir(StringRef(FileName).rsplit('/').first.str() + "/" + path);
+  }
+  if(isNotDependency) {
+    llvm::dbgs() << "Writing not dependency...\n";
     FileName = filepath + ND_LINES;
+  } else {
+    FileName = filepath + DD_LINES;
+  }
 
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
