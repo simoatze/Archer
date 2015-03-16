@@ -102,7 +102,7 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
 	std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
 	std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
 
-	//llvm::dbgs() << File << " - " << filename.first << "\n";
+	// llvm::dbgs() << File << " - " << filename.first << "\n";
 	if (File.compare(filename.first) == 0) {
 	  std::string str;
 	  llvm::raw_string_ostream rso(str);
@@ -136,12 +136,11 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
     filepath = StringRef(FileName).rsplit('/').first.str() + "/" + path + StringRef(FileName).rsplit('/').second.str();
     createDir(StringRef(FileName).rsplit('/').first.str() + "/" + path);
   }
-  if(isNotDependency) {
-    llvm::dbgs() << "Writing not dependency...\n";
+
+  if(isNotDependency)
     FileName = filepath + ND_LINES;
-  } else {
+  else
     FileName = filepath + DD_LINES;
-  }
 
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
