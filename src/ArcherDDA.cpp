@@ -99,14 +99,14 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
 
 	// llvm::dbgs() << "Line: " << Line << " - File: " << File << " - Dir: " << Dir << " - Value: " << isNotDependency << "\n";
 
-	std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
-	std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
+	// std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
+	// std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
 
 	// llvm::dbgs() << File << " - " << filename.first << "\n";
 	// if (File.compare(filename.first) == 0) {
-	std::string str;
-	llvm::raw_string_ostream rso(str);
-	BI->print(rso);
+	// std::string str;
+	// llvm::raw_string_ostream rso(str);
+	// BI->print(rso);
 	
 	// llvm::dbgs() << "line:" + std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
 	std::string string = std::to_string(Line) + "," + File.str() + "," + Dir.str() + "\n";
@@ -124,7 +124,13 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   std::string path = dir + "/";
   std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
   std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
-  std::string FileName = filename.first.str();
+  int pos = filename.first.str().find(".nomp.bc");
+  std::string FileName;
+  if(pos != std::string::npos) {
+    FileName = filename.first.str().substr(0,pos);
+  } else {
+    FileName = filename.first.str();
+  }
   if(FileName.substr(0,2).compare("./") == 0)
     FileName = FileName.substr(2);
   std::string filepath;

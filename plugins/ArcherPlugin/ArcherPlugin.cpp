@@ -190,6 +190,10 @@ bool ArcherDDAClassVisitor::VisitFunctionDecl(FunctionDecl *f)
       // Getting information about pragmas: pragma line, start, end, file, directory
     case Stmt::OMPParallelDirectiveClass:
     case Stmt::OMPForDirectiveClass:
+    case Stmt::OMPCriticalDirectiveClass:
+    case Stmt::OMPSingleDirectiveClass:
+    case Stmt::OMPAtomicDirectiveClass:
+    case Stmt::OMPTaskDirectiveClass:
     case Stmt::OMPParallelForDirectiveClass: {
       //llvm::dbgs() << "OMPConstruct - " << sourceMgr->getFilename(stmt->getLocStart()) << " - LOC:" << sourceMgr->getSpellingLineNumber(stmt->getLocStart()) << "\n";
     
