@@ -1,0 +1,28 @@
+#!/usr/bin/env python3-3.4.2 
+
+from os import path
+import sys
+import re
+import argparse
+
+VERSION = '1.0.0'
+
+def argumentsParser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-v', '--version', action='version', version='Archer ' + VERSION + ' - Copyright (C) 2015')
+    parser.add_argument('-g', action='store_true', default=True, help='Generate source-level debug information.')
+    # parser.add_argument('action', choices=('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz'), action='store_true', default=True, help='')
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument('-O0', action='store_true', default=True, help='')
+    action.add_argument('-O1', action='store_true', help='')
+
+    return parser
+    
+
+if __name__ == '__main__':
+
+    # parse command line arguments
+    parser = argparse.ArgumentParser(description='Compile your program with Archer support, a data race detector for OpenMP programs.', parents=[argumentsParser()])
+    args = parser.parse_args()
+
+    print(args)
