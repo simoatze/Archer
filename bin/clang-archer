@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import re
 import argparse
 import errno
+import os
+import re
+import subprocess
+import sys
 
-VERSION = '1.0.0'
+VERSION = '0.1'
 
-WORKING_DIRECTORY = '.archer'
+# Exstension
+POLLY_BC_EXT = ".nomp.bc"
+OMP_BC_EXT = ".bc"
+OPT_EXT = ".opt"
+
+WORKING_DIR = '.archer'
 SOURCE_EXT = ['.c', '.cc', '.cpp', '.cxx']
 OBJ_EXT = ['.o']
 LIB_EXT = ['.a']
@@ -22,23 +28,32 @@ def mkdir_p(path):
             pass
         else: raise
 
-def executeCommand(cmd):
+def compileErrorCheck(p, cmd, output):
+    if p.returncode:
+        print >> sys.stderr, output
+        sys.exit("Archer encountered an error when invoking " + cmd + ". Exiting...")
+        
+def executeCommand(cmd, args):
+    if args.debug:
+        print('DEBUG-INFO: Command[' + ''.join(s + ' ' for s in cmd) + ']')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
 
     compileErrorCheck(p, cmd, output)
 
-def compileErrorCheck(p, cmd, output):
-    if p.returncode:
-        print >> sys.stderr, output
-        sys.exit("Archer encountered an error when invoking " + cmd + ". Exiting...")
-
 def argumentsParser():
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('-v', '--version', action='version', version='Archer ' + VERSION + ' - Copyright (C) 2015')
+    parser.add_argument('-v', '--version', action='version', version='Archer ' + VERSION + '\nCopyright (C) 2015')
+    parser.add_argument('-d', '--debug', action='store_true', help='Print the compiling commands')
     parser.add_argument('-CC', nargs='?', default='clang', help='Change the program used to compile and link the programs')
     parser.add_argument('-OPT', nargs='?', default='opt', help='Change the program used to optmize the programs')
-    parser.add_argument('-LIB', nargs='?', default='libArcher.so', help='Set the path where to find Archer libraries')         
+    parser.add_argument('-LIB', nargs='?', default='libArcher.so', help='Set the path where to find Archer libraries')
+    # parser.add_argument('-OPENMP_INCLUDE', nargs='?', default='', help='Set the path where to find OpenMP headers')
+    # parser.add_argument('-MPI_INCLUDE', nargs='?', default='', help='Set the path where to find MPI headers')
+    # parser.add_argument('-MPI_LIB', nargs='?', default='', help='Set the path where to find MPI libraries')
+    # parser.add_argument('-g', action='store_true')       
+    parser.add_argument('-g', action='store_true', help='If the debugging flag is not present in the compilation command it will be added by default')
+    parser.add_argument('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz', action='store_true', help='The optimization flags will be forse to \'-O0\' optimization level for analysis purposes')
     parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
     parser.add_argument('-c', nargs="?", default=None, help='Only run preprocess, compile, and assemble steps')
     parser.add_argument('-o', help='Output filename')
@@ -52,27 +67,37 @@ def runArcher(args):
     # Create ByteCode
     # No OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", args.o + ".nomp.bc" ]
-
+    clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", WORKING_DIR + "/" + args.o + POLLY_BC_EXT ]
+    clangCommand.extend(args.unknown)
+ 
+    executeCommand(clangCommand, args)
     # No OpenMP Support
-    print clangCommand
-    sys.exit(0)
 
-    # test -d .blacklists || ${CC} ${CFLAGS} -emit-llvm -O0 -g -c $< -o $<.nomp.bc
-	# test -d .blacklists ||  ${CC} ${CFLAGS} -fopenmp -emit-llvm -O0 -g -c $< -o $<.bc
+    # OpenMP Support
+    clangCommand = [ args.CC ]
+    clangCommand += [ "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", WORKING_DIR + "/" + args.o + OMP_BC_EXT ]
+    clangCommand.extend(args.unknown)
+ 
+    executeCommand(clangCommand, args)
+    # OpenMP Support
     # Create ByteCode
 
-    optCommand = args.OPT
+    # Changing dir to WORKING_DIR
+    os.chdir(WORKING_DIR)
+    print(os.getcwd())
+
 
     # Polly Pass
     #POLLY_CMD = ['-mem2reg', '-S -polly-canonicalize', '-load libArcher.so']
-    optCommand += ['-mem2reg', ]
+    optCommand = [ args.OPT ]
+    optCommand += [ '-mem2reg', args.o + POLLY_BC_EXT, "-o", args.o + POLLY_BC_EXT + OPT_EXT ]
+    executeCommand(optCommand, args)
+
     print optCommand
     sys.exit()
-    p = subprocess.Popen(optCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    optOutput = p.communicate()[0]
-
-    compileErrorCheck(p, cmd, output)
+    # $OPT -mem2reg $i -o $i.opt
+    # $OPT -S -polly-canonicalize $i.opt > $i.ll
+    # $OPT -load $PASS -archer-dda $i.ll -o $i-optmized.ll
     # Polly Pass
 
     #print(os.path.dirname(os.path.abspath(args.src)))
@@ -82,7 +107,7 @@ def runArcher(args):
 if __name__ == '__main__':
 
     # parse command line arguments
-    parser = argparse.ArgumentParser(description='Compile your program with Archer support, a data race detector for OpenMP programs.', parents=[argumentsParser()])
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Compile your program with Archer support, a data race detector for OpenMP programs.', parents=[argumentsParser()])
     args, unknown = parser.parse_known_args()
 
     # find source file .c, .cc, .cpp, .cxx in unknown arguments
@@ -107,4 +132,7 @@ if __name__ == '__main__':
         args.__dict__['src'] = args.c
         args.__dict__['unknown'] = unknown
 
+    # args.OPENMP_INCLUDE = "-I" + args.OPENMP_INCLUDE if (args.OPENMP_INCLUDE is not '') else ''
+    # args.MPI_INCLUDE = "-I" + args.MPI_INCLUDE if (args.MPI_INCLUDE is not '') else ''
+        
     runArcher(args)

@@ -2,18 +2,27 @@
 # set -x
 
 if [ "$(uname)" == "Linux" ]; then
-    RED='\e[0;31m'
-    NC='\e[0m'
-    echoc() { echo -e "${RED}$1${NC}"; }
+    ESCAPE="\e"
+else
+    ESCAPE="\x1B"
 fi
 
+RED=$ESCAPE'[0;31m'
+NC=$ESCAPE'[0m'
+echoc() { echo -e "${RED}$1${NC}"; }
+
 LLVM_INSTALL=/usr
+HTTP=false
 
 for i in "$@"
 do
     case $i in
 	--prefix=*)
 	    LLVM_INSTALL="${i#*=}"
+	    shift
+	    ;;
+	--http)
+	    HTTP=true
 	    shift
 	    ;;
 	*)
@@ -27,11 +36,15 @@ echo
 echoc "LLVM will be installed under [${LLVM_INSTALL}]"
 
 # Get the number of cores to speed up make process
-if ! type "nproc" > /dev/null; then
-    PROCS=$(nprocs)
+if [ "$(uname)" == "Darwin" ]; then
+    PROCS=$(sysctl -a | grep machdep.cpu | grep core_count | awk -F " " '{ print $2 }')
 else
-    PROCS=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | tail -1)
-    PROCS=`expr $PROCS + 1`    
+    if ! type "nproc" > /dev/null; then
+	PROCS=$(nprocs)
+    else
+	PROCS=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | tail -1)
+	PROCS=`expr $PROCS + 1`    
+    fi
 fi
 
 echo
@@ -64,22 +77,38 @@ INTELOMPRT_FILE=libomp_20140926_oss.tgz
 # LLVM Sources
 echo
 echoc "Obtaining LLVM OpenMP..."
-git clone git@github.com:clang-omp/llvm.git ${LLVM_SRC}
+if [ "$HTTP" == "true" ]; then
+    git clone https://github.com/clang-omp/llvm.git ${LLVM_SRC}
+else
+    git clone git@github.com:clang-omp/llvm.git ${LLVM_SRC}
+fi
 
 # Clang Sources
 echo
 echoc "Obtaining LLVM/Clang OpenMP..."
-git clone -b clang-omp git@github.com:clang-omp/clang.git ${CLANG_SRC}
+if [ "$HTTP" == "true" ]; then
+    git clone https://github.com/clang-omp/clang.git ${CLANG_SRC}
+else
+    git clone -b clang-omp git@github.com:clang-omp/clang.git ${CLANG_SRC}
+fi
 
 # Runtime Sources
 echo
 echoc "Obtaining LLVM OpenMP Runtime..."
-git clone git@github.com:clang-omp/compiler-rt.git ${LLVMRT_SRC}
+if [ "$HTTP" == "true" ]; then
+    git clone https://github.com/clang-omp/compiler-rt.git ${LLVMRT_SRC}
+else
+    git clone git@github.com:clang-omp/compiler-rt.git ${LLVMRT_SRC}
+fi
 
 # Polly Sources
 echo
 echoc "Obtaining Polly..."
-git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
+if [ "$HTTP" == "true" ]; then
+    git clone https://github.com/llvm-mirror/polly.git ${POLLY_SRC}
+else
+    git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
+fi
 cd ${POLLY_SRC}
 git checkout ${POLLY_COMMIT}
 
