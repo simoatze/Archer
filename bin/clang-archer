@@ -9,20 +9,21 @@ import sys
 
 VERSION = '0.1'
 
-# Exstension
+# Extensions
 POLLY_BC_EXT = ".nomp.bc"
 OMP_BC_EXT = ".bc"
 OPT_EXT = ".opt"
 LL_EXT = ".ll"
-
-# Flags
-ARCHER_DDA_FLAG = '-archer-dda'
-
-WORKING_DIR = '.archer'
 SOURCE_EXT = ['.c', '.cc', '.cpp', '.cxx']
 OBJ_EXT = ['.o']
 LIB_EXT = ['.a']
+
+# Flags
+ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
+
+# Working Dirs
+WORKING_DIR = '.archer'
 
 def mkdir_p(path):
     try:
@@ -96,14 +97,12 @@ def runArcher(args):
     executeCommand(optCommand, args)
 
     optCommand = [ args.OPT ]
-    optCommand += [ '-S', '-polly-canonicalize', args.o + POLLY_BC_EXT + OPT_EXT, ">", args.o + LL_EXT ]
+    optCommand += [ '-S', '-polly-canonicalize', args.o + POLLY_BC_EXT + OPT_EXT, "-o", args.o + LL_EXT ]
     executeCommand(optCommand, args)
-
     optCommand = [ args.OPT ]
     optCommand += [ '-load', args.LIB, ARCHER_DDA_FLAG, args.o + LL_EXT, "-o", args.o + "-optmized" + LL_EXT ]
     executeCommand(optCommand, args)
     
-    print optCommand
     sys.exit()
     # $OPT -load $PASS -archer-dda $i.ll -o $i-optmized.ll
     # Polly Pass
