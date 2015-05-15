@@ -1,28 +1,110 @@
-#!/usr/bin/env python3-3.4.2 
+#!/usr/bin/env python
 
-from os import path
+import os
 import sys
 import re
 import argparse
+import errno
 
 VERSION = '1.0.0'
+
+WORKING_DIRECTORY = '.archer'
+SOURCE_EXT = ['.c', '.cc', '.cpp', '.cxx']
+OBJ_EXT = ['.o']
+LIB_EXT = ['.a']
+LINKING=False
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
+
+def executeCommand(cmd):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = p.communicate()[0]
+
+    compileErrorCheck(p, cmd, output)
+
+def compileErrorCheck(p, cmd, output):
+    if p.returncode:
+        print >> sys.stderr, output
+        sys.exit("Archer encountered an error when invoking " + cmd + ". Exiting...")
 
 def argumentsParser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-v', '--version', action='version', version='Archer ' + VERSION + ' - Copyright (C) 2015')
-    parser.add_argument('-g', action='store_true', default=True, help='Generate source-level debug information.')
-    # parser.add_argument('action', choices=('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz'), action='store_true', default=True, help='')
-    action = parser.add_mutually_exclusive_group()
-    action.add_argument('-O0', action='store_true', default=True, help='')
-    action.add_argument('-O1', action='store_true', help='')
+    parser.add_argument('-CC', nargs='?', default='clang', help='Change the program used to compile and link the programs')
+    parser.add_argument('-OPT', nargs='?', default='opt', help='Change the program used to optmize the programs')
+    parser.add_argument('-LIB', nargs='?', default='libArcher.so', help='Set the path where to find Archer libraries')         
+    parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
+    parser.add_argument('-c', nargs="?", default=None, help='Only run preprocess, compile, and assemble steps')
+    parser.add_argument('-o', help='Output filename')
 
     return parser
+
+def runArcher(args):
     
+    mkdir_p('.archer')
+
+    # Create ByteCode
+    # No OpenMP Support
+    clangCommand = [ args.CC ]
+    clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", args.o + ".nomp.bc" ]
+
+    # No OpenMP Support
+    print clangCommand
+    sys.exit(0)
+
+    # test -d .blacklists || ${CC} ${CFLAGS} -emit-llvm -O0 -g -c $< -o $<.nomp.bc
+	# test -d .blacklists ||  ${CC} ${CFLAGS} -fopenmp -emit-llvm -O0 -g -c $< -o $<.bc
+    # Create ByteCode
+
+    optCommand = args.OPT
+
+    # Polly Pass
+    #POLLY_CMD = ['-mem2reg', '-S -polly-canonicalize', '-load libArcher.so']
+    optCommand += ['-mem2reg', ]
+    print optCommand
+    sys.exit()
+    p = subprocess.Popen(optCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    optOutput = p.communicate()[0]
+
+    compileErrorCheck(p, cmd, output)
+    # Polly Pass
+
+    #print(os.path.dirname(os.path.abspath(args.src)))
+    #print(os.getcwd())
+    print(clangCommand)
 
 if __name__ == '__main__':
 
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Compile your program with Archer support, a data race detector for OpenMP programs.', parents=[argumentsParser()])
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
-    print(args)
+    # find source file .c, .cc, .cpp, .cxx in unknown arguments
+    if args.c is None:
+        for arg in unknown:
+            if any(arg.endswith(ext) for ext in SOURCE_EXT):
+                args.__dict__['src'] = arg
+                unknown.remove(arg)
+                args.__dict__['unknown'] = unknown
+                break
+        if 'src' not in args.__dict__:
+            for arg in unknown:
+                if any(arg.endswith(ext) for ext in OBJ_EXT):
+                    args.__dict__['obj'] = arg
+                    unknown.remove(arg)
+                    args.__dict__['unknown'] = unknown
+                    LINKING=True
+                    break
+            else:
+                sys.exit("Archer encountered an error when parsing parameters. Exiting...")
+    else:
+        args.__dict__['src'] = args.c
+        args.__dict__['unknown'] = unknown
+
+    runArcher(args)
