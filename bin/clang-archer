@@ -2,17 +2,27 @@
 
 import argparse
 import errno
+import json
 import os
 import re
+import signal
 import subprocess
 import sys
 
 VERSION = '0.1'
 
+# Working Dirs
+WORKING_DIR = os.getcwd()
+BUILD_LIST = '/tmp/buildList.ach'
+buildFile = None
+ARCHER_DIR = '.archer'
+INCLUDE_LIST = []
+
 # Extensions
 POLLY_BC_EXT = ".nomp.bc"
 OMP_BC_EXT = ".bc"
 OPT_EXT = ".opt"
+BC_EXT = ".bc"
 LL_EXT = ".ll"
 SOURCE_EXT = ['.c', '.cc', '.cpp', '.cxx']
 OBJ_EXT = ['.o']
@@ -22,8 +32,17 @@ LIB_EXT = ['.a']
 ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
 
-# Working Dirs
-WORKING_DIR = '.archer'
+def signal_handler(signal, frame):
+    print('You pressed Ctrl+C!')
+    os.remove(BUILD_LIST)
+    sys.exit(0)
+
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    def __getattr__(self, attr):
+        return self.get(attr)
+    __setattr__= dict.__setitem__
+    __delattr__= dict.__delitem__
 
 def mkdir_p(path):
     try:
@@ -40,7 +59,7 @@ def compileErrorCheck(p, cmd, output):
         
 def executeCommand(cmd, args):
     if args.debug:
-        print('DEBUG-INFO: Command[' + ''.join(s + ' ' for s in cmd) + ']')
+        print('DEBUG-INFO: Command[' + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + ']')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
 
@@ -52,7 +71,10 @@ def argumentsParser():
     parser.add_argument('-d', '--debug', action='store_true', help='Print the compiling commands')
     parser.add_argument('-CC', nargs='?', default='clang', help='Change the program used to compile and link the programs')
     parser.add_argument('-OPT', nargs='?', default='opt', help='Change the program used to optmize the programs')
+    parser.add_argument('-LINK', nargs='?', default='llvm-link', help='Change the program used to link the byte code files')
+    parser.add_argument('-DIS', nargs='?', default='llvm-dis', help='Change the program used to disassemble the byte code files')
     parser.add_argument('-LIB', nargs='?', default='libArcher.so', help='Set the path where to find Archer libraries')
+    parser.add_argument('-PLUGIN_LIB', nargs='?', default='ArcherPlugin.so', help='Set the path where to find Archer Plugin libraries')
     # parser.add_argument('-OPENMP_INCLUDE', nargs='?', default='', help='Set the path where to find OpenMP headers')
     # parser.add_argument('-MPI_INCLUDE', nargs='?', default='', help='Set the path where to find MPI headers')
     # parser.add_argument('-MPI_LIB', nargs='?', default='', help='Set the path where to find MPI libraries')
@@ -65,14 +87,14 @@ def argumentsParser():
 
     return parser
 
-def runArcher(args):
+def archerBuild(args):
     
     mkdir_p('.archer')
 
     # Create ByteCode
     # No OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", WORKING_DIR + "/" + args.o + POLLY_BC_EXT ]
+    clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT ]
     clangCommand.extend(args.unknown)
  
     executeCommand(clangCommand, args)
@@ -80,7 +102,7 @@ def runArcher(args):
 
     # OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", WORKING_DIR + "/" + args.o + OMP_BC_EXT ]
+    clangCommand += [ "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + OMP_BC_EXT ]
     clangCommand.extend(args.unknown)
  
     executeCommand(clangCommand, args)
@@ -88,9 +110,8 @@ def runArcher(args):
     # Create ByteCode
 
     # Changing dir to WORKING_DIR
-    os.chdir(WORKING_DIR)
-    print(os.getcwd())
-
+    os.chdir(ARCHER_DIR)
+   
     # Polly Pass
     optCommand = [ args.OPT ]
     optCommand += [ '-mem2reg', args.o + POLLY_BC_EXT, "-o", args.o + POLLY_BC_EXT + OPT_EXT ]
@@ -99,19 +120,95 @@ def runArcher(args):
     optCommand = [ args.OPT ]
     optCommand += [ '-S', '-polly-canonicalize', args.o + POLLY_BC_EXT + OPT_EXT, "-o", args.o + LL_EXT ]
     executeCommand(optCommand, args)
+    
     optCommand = [ args.OPT ]
     optCommand += [ '-load', args.LIB, ARCHER_DDA_FLAG, args.o + LL_EXT, "-o", args.o + "-optmized" + LL_EXT ]
     executeCommand(optCommand, args)
-    
-    sys.exit()
-    # $OPT -load $PASS -archer-dda $i.ll -o $i-optmized.ll
     # Polly Pass
 
-    #print(os.path.dirname(os.path.abspath(args.src)))
-    #print(os.getcwd())
-    print(clangCommand)
+    # Clang Plugin to find OpenMP constructs information
+    clangCommand = [ args.CC ]
+    clangCommand += [ "-O0", "-g", "-fopenmp", "-c", "../" + args.src ]
+    clangCommand.extend(args.unknown)
+    clangCommand.extend(INCLUDE_LIST)
+    clangCommand += [ "-fsyntax-only", "-Xclang", "-load", "-Xclang", args.PLUGIN_LIB, "-Xclang", "-plugin", "-Xclang", "archer" ]
+    executeCommand(clangCommand, args)
+    # Clang Plugin to find OpenMP constructs information
+
+def archerLink(args):
+    print "Ready for linking..."
+
+    # Creating and changing to WORKING_DIR
+    mkdir_p('.archer')
+    os.chdir(ARCHER_DIR)
+
+    builds = []
+    bcLst = []
+    # Read files to compile
+    with open(BUILD_LIST, "r") as f:
+        for line in f:
+            lst = []
+            spl = line.split(",",2)
+            bc = spl[1].rsplit("/", 1)
+            bcLst.append(bc[0] + "/" + ARCHER_DIR + "/" + bc[1] + BC_EXT)
+            lst.append(spl[0])
+            lst.append(spl[1])
+            lst.append(dotdict(json.loads(spl[2])))
+            builds.append(lst)
+    # Read files to compile
+
+    # Link byte code and run InstructionContext Pass
+    linkCommand = [ args.LINK ]
+    linkCommand += [ "-o", args.o + BC_EXT ]
+    linkCommand.extend(bcLst)
+    executeCommand(linkCommand, args)
+
+    linkCommand = [ args.LINK ]
+    linkCommand += [ "-f", args.o + BC_EXT, "-o", args.o + LL_EXT ]
+    executeCommand(linkCommand, args)
+
+    optCommand = [ args.OPT ]
+    optCommand += [ "-load", args.LIB, "-archer-instcontext", args.o + LL_EXT, "-o", args.o + BC_EXT ]
+    executeCommand(optCommand, args)
+    # Link byte code and run InstructionContext Pass            
+
+    # Create blacklists and compile with fsanitize
+    for item in builds:
+        blCommand = [ "archer-bl" ]
+        blCommand += [ item[0], "0" ]
+        executeCommand(blCommand, args)
+
+        arg = item[2]
+        clangCommand = [ arg.OPT ]
+        clangCommand += [ "-g", "-O0" ]
+        if(arg.fopenmp):
+            clangCommand += [ "-fopenmp" ]
+        lst = item[0].rsplit("/", 1)
+        blacklist = lst[0] + "/.archer/blacklists/" + lst[1]
+        print blacklist
+        clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], item[0]]
+        clangCommand.extend(arg.unknown)
+    # Create blacklists
+
+    print args
+    
+    # os.remove(BUILD_LIST)
 
 if __name__ == '__main__':
+    
+    signal.signal(signal.SIGINT, signal_handler)
+
+    buildFile = open(BUILD_LIST, "a")
+
+    # Create include dir list
+    os.chdir("..")
+    for dir in os.walk(os.getcwd()):
+        for file in os.listdir(dir[0]):
+            if(str(file).endswith(".h")):
+                INCLUDE_LIST.append("-I" + dir[0])
+                break
+    os.chdir(WORKING_DIR)
+    # Create include dir list
 
     # parse command line arguments
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Compile your program with Archer support, a data race detector for OpenMP programs.', parents=[argumentsParser()])
@@ -128,6 +225,7 @@ if __name__ == '__main__':
         if 'src' not in args.__dict__:
             for arg in unknown:
                 if any(arg.endswith(ext) for ext in OBJ_EXT):
+                    args.__dict__['src'] = None
                     args.__dict__['obj'] = arg
                     unknown.remove(arg)
                     args.__dict__['unknown'] = unknown
@@ -139,7 +237,15 @@ if __name__ == '__main__':
         args.__dict__['src'] = args.c
         args.__dict__['unknown'] = unknown
 
+    # Keep list of compiled file
+    if args.src is not None:
+        buildFile.write(os.path.abspath(args.src) + "," + os.path.abspath(args.o) + "," + json.dumps(args.__dict__) + '\n')
+    buildFile.close()
+
     # args.OPENMP_INCLUDE = "-I" + args.OPENMP_INCLUDE if (args.OPENMP_INCLUDE is not '') else ''
     # args.MPI_INCLUDE = "-I" + args.MPI_INCLUDE if (args.MPI_INCLUDE is not '') else ''
-        
-    runArcher(args)
+
+    if not LINKING:
+        archerBuild(args)
+    else:
+        archerLink(args)

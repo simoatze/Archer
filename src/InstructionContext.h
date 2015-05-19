@@ -84,7 +84,7 @@ namespace {
     static char ID;
   
   InstructionContext() : ModulePass(ID) {
-      dir = ".blacklists";
+      dir = ".archer/blacklists";
       createDir(dir);
     }
 

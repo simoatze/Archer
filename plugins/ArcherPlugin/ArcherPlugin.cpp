@@ -25,7 +25,7 @@ ArcherDDAClassVisitor::ArcherDDAClassVisitor(StringRef InFile)
   std::string path;
   std::string filename;
 
-  // pffilename = ".blacklists/" + InFile.str() + DD_LINES;
+  // pffilename = "blacklists/" + InFile.str() + DD_LINES;
 
   //errs() << "Dir: " << InFile << "\n";
   std::pair<StringRef, StringRef> pathname = InFile.rsplit('/');
@@ -223,9 +223,9 @@ bool ArcherDDAClassVisitor::writeFile() {
   
   // Loads/Stores list
   if(omploc.path.empty())
-    dir = ".blacklists";
+    dir = ".archer/blacklists";
   else
-    dir = omploc.path + "/.blacklists";
+    dir = omploc.path + "/.archer/blacklists";
   
   if(llvm::sys::fs::create_directory(Twine(dir))) {
     llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";

@@ -29,9 +29,9 @@ int main(int argc, char **argv)
 
   filename.append(argv[1]);
 
-  std::string lsfilename = ".blacklists/" + filename + LS_LINES;
-  std::string fcfilename = ".blacklists/function_calls.fc";
-  std::string blfilename = ".blacklists/" + filename + BL_LINES;
+  std::string lsfilename = "blacklists/" + filename + LS_LINES;
+  std::string fcfilename = "blacklists/function_calls.fc";
+  std::string blfilename = "blacklists/" + filename + BL_LINES;
 
   std::ifstream fcfile(fcfilename.c_str(), std::ios_base::in);
   std::ifstream lsfile(lsfilename.c_str(), std::ios_base::in);

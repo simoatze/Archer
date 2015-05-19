@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   std::vector<std::string> tokens;
   split(tokens, file, is_any_of("/"));
-  std::string filename = file.substr(0, file.size() - tokens.back().size()) + ".blacklists/" + tokens.back();
+  std::string filename = file.substr(0, file.size() - tokens.back().size()) + ".archer/blacklists/" + tokens.back();
   unsigned option = StringToNumber<unsigned>(argv[2]);
 
   // Sequential Instructions

@@ -77,7 +77,7 @@ public:
   LineMemoryUsage() : ModulePass(ID) {
     ls_content = "";
     fc_content = "";
-    dir = ".blacklists";
+    dir = "blacklists";
 
     if(llvm::sys::fs::create_directory(Twine(dir))) {
       llvm::errs() << "Unable to create \"" << dir << "\" directory.\n";
