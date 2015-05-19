@@ -24,9 +24,11 @@ OMP_BC_EXT = ".bc"
 OPT_EXT = ".opt"
 BC_EXT = ".bc"
 LL_EXT = ".ll"
+BL_EXT = ".bl"
 SOURCE_EXT = ['.c', '.cc', '.cpp', '.cxx']
 OBJ_EXT = ['.o']
 LIB_EXT = ['.a']
+LOCAL_INCLUDE=[ "-I..", "-I../" ]
 
 # Flags
 ARCHER_DDA_FLAG = '-archer-dda'
@@ -58,11 +60,12 @@ def compileErrorCheck(p, cmd, output):
         sys.exit("Archer encountered an error when invoking " + cmd + ". Exiting...")
         
 def executeCommand(cmd, args):
-    if args.debug:
+    if args is not None and args.debug:
         print('DEBUG-INFO: Command[' + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + ']')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
-
+    if output is not '':
+        print output
     compileErrorCheck(p, cmd, output)
 
 def argumentsParser():
@@ -104,33 +107,35 @@ def archerBuild(args):
     clangCommand = [ args.CC ]
     clangCommand += [ "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + OMP_BC_EXT ]
     clangCommand.extend(args.unknown)
- 
     executeCommand(clangCommand, args)
     # OpenMP Support
     # Create ByteCode
 
     # Changing dir to WORKING_DIR
-    os.chdir(ARCHER_DIR)
+    #os.chdir(ARCHER_DIR)
    
     # Polly Pass
     optCommand = [ args.OPT ]
-    optCommand += [ '-mem2reg', args.o + POLLY_BC_EXT, "-o", args.o + POLLY_BC_EXT + OPT_EXT ]
+    optCommand += [ '-mem2reg', ARCHER_DIR + "/" + args.o + POLLY_BC_EXT, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT + OPT_EXT ]
     executeCommand(optCommand, args)
 
     optCommand = [ args.OPT ]
-    optCommand += [ '-S', '-polly-canonicalize', args.o + POLLY_BC_EXT + OPT_EXT, "-o", args.o + LL_EXT ]
+    optCommand += [ '-S', '-polly-canonicalize', ARCHER_DIR + "/" + args.o + POLLY_BC_EXT + OPT_EXT, "-o", ARCHER_DIR + "/" + args.o + LL_EXT ]
     executeCommand(optCommand, args)
     
     optCommand = [ args.OPT ]
-    optCommand += [ '-load', args.LIB, ARCHER_DDA_FLAG, args.o + LL_EXT, "-o", args.o + "-optmized" + LL_EXT ]
+    optCommand += [ '-load', args.LIB, ARCHER_DDA_FLAG, ARCHER_DIR + "/" + args.o + LL_EXT, "-o", ARCHER_DIR + "/" + args.o + "-optmized" + LL_EXT ]
     executeCommand(optCommand, args)
     # Polly Pass
 
     # Clang Plugin to find OpenMP constructs information
     clangCommand = [ args.CC ]
-    clangCommand += [ "-O0", "-g", "-fopenmp", "-c", "../" + args.src ]
+    clangCommand += [ "-O0", "-g", "-fopenmp", "-c", args.src ]
     clangCommand.extend(args.unknown)
-    clangCommand.extend(INCLUDE_LIST)
+    # lst = filter(lambda item: any(x in item for x in LOCAL_INCLUDE), args.unknown)
+    # if lst:
+    #     clangCommand += [ "-I../.."]
+    # clangCommand.extend(INCLUDE_LIST)
     clangCommand += [ "-fsyntax-only", "-Xclang", "-load", "-Xclang", args.PLUGIN_LIB, "-Xclang", "-plugin", "-Xclang", "archer" ]
     executeCommand(clangCommand, args)
     # Clang Plugin to find OpenMP constructs information
@@ -140,7 +145,7 @@ def archerLink(args):
 
     # Creating and changing to WORKING_DIR
     mkdir_p('.archer')
-    os.chdir(ARCHER_DIR)
+    # os.chdir(ARCHER_DIR)
 
     builds = []
     bcLst = []
@@ -159,16 +164,16 @@ def archerLink(args):
 
     # Link byte code and run InstructionContext Pass
     linkCommand = [ args.LINK ]
-    linkCommand += [ "-o", args.o + BC_EXT ]
+    linkCommand += [ "-o", ARCHER_DIR + "/" + args.o + BC_EXT ]
     linkCommand.extend(bcLst)
     executeCommand(linkCommand, args)
 
     linkCommand = [ args.LINK ]
-    linkCommand += [ "-f", args.o + BC_EXT, "-o", args.o + LL_EXT ]
+    linkCommand += [ "-f", ARCHER_DIR + "/" + args.o + BC_EXT, "-o", ARCHER_DIR + "/" + args.o + LL_EXT ]
     executeCommand(linkCommand, args)
 
     optCommand = [ args.OPT ]
-    optCommand += [ "-load", args.LIB, "-archer-instcontext", args.o + LL_EXT, "-o", args.o + BC_EXT ]
+    optCommand += [ "-load", args.LIB, "-archer-instcontext", ARCHER_DIR + "/" + args.o + LL_EXT, "-o", ARCHER_DIR + "/" + args.o + BC_EXT ]
     executeCommand(optCommand, args)
     # Link byte code and run InstructionContext Pass            
 
@@ -179,23 +184,21 @@ def archerLink(args):
         executeCommand(blCommand, args)
 
         arg = item[2]
-        clangCommand = [ arg.OPT ]
+        clangCommand = [ arg.CC ]
         clangCommand += [ "-g", "-O0" ]
         if(arg.fopenmp):
             clangCommand += [ "-fopenmp" ]
         lst = item[0].rsplit("/", 1)
-        blacklist = lst[0] + "/.archer/blacklists/" + lst[1]
-        print blacklist
+        blacklist = lst[0] + "/.archer/blacklists/" + lst[1] + BL_EXT
         clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], item[0]]
         clangCommand.extend(arg.unknown)
-    # Create blacklists
-
-    print args
+        executeCommand(clangCommand, args)
+    # Create blacklists and compile with fsanitize
     
     # os.remove(BUILD_LIST)
 
 if __name__ == '__main__':
-    
+
     signal.signal(signal.SIGINT, signal_handler)
 
     buildFile = open(BUILD_LIST, "a")
