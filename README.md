@@ -23,11 +23,12 @@
 <span style="font-weight: bold; font-variant: small-caps">archer</span> is a
 data race detector for OpenMP programs.
 
-<span style="font-variant: small-caps">archer</span> combines static and dynamic techniques to identify data races
-in large OpenMP applications, generating low runtime and memory
-overhead, while still offering high accuracy and precision. It builds
-on the open-source infrastructures LLVM and ThreadSanitizer to provide
-portability.
+<span style="font-variant:
+small-caps">archer</span> combines static and dynamic techniques to
+identify data races in large OpenMP applications, generating low
+runtime and memory overhead, while still offering high accuracy and
+precision. It builds on the open-source infrastructures LLVM and
+ThreadSanitizer to provide portability.
 
 # Installation<a id="sec-2" name="sec-2"></a>
 
@@ -36,16 +37,16 @@ more information go to <http://clang-omp.github.io>).
 
 ## Building<a id="sec-2-1" name="sec-2-1"></a>
 
-First obtain **Archer**, e.g. from Github (<https://github.com/soarlab/Archer>):
+First obtain Archer, e.g. from Github (<https://github.com/soarlab/Archer>):
 
     git clone git@github.com:soarlab/Archer.git Archer
 
-Then build **Archer** by running `install.sh`:
+Then build Archer by running `install.sh`:
 
     ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
 
 The installation script will create a folder called *LLVM* at the same
-level of *Archer*. 
+level of Archer. 
 
 # Configuration<a id="sec-3" name="sec-3"></a>
 
