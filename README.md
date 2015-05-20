@@ -20,7 +20,7 @@
 
 <img src="resources/images/archer_logo.png" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
-**<span style="font-variant: small-caps">Archer </span>** is a
+<span style="font-variant: small-caps">archer</span> is a
 data race detector for OpenMP programs.
 
 **Archer** combines static and dynamic techniques to identify data races
