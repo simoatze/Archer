@@ -209,7 +209,7 @@ def archerLink(args):
     if os.path.isfile(AR_FILE):
         try:
             with open(AR_FILE, 'r') as file:
-                # Create libraries
+                # Create static libraries
                 pass    
         except IOError as e:
             print "clang-argcher: No such file or directory or no read permissions"
