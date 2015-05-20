@@ -19,6 +19,6 @@ else:
     # Intercepted by clang-archer
     COMMAND_LOG = '/tmp/ar.ach'
     
-    with open(COMMAND_LOG, "w") as f:
-        f.write(os.getcwd() + "," + sys.argv)
+    with open(COMMAND_LOG, "a") as f:
+        f.write(os.getcwd() + "," + sys.argv[0] + ''.join(' ' + s for s in sys.argv[1:]) + "\n")
         f.close()

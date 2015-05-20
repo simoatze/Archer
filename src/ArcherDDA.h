@@ -62,7 +62,7 @@ namespace polly {
 
   ArcherDDA() : ScopPass(ID) {
       fileInitialized = false;
-      dir = ".archer/blacklists";
+      dir = "blacklists";
       createDir(dir);
     }
     

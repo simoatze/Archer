@@ -33,10 +33,15 @@ LOCAL_INCLUDE=[ "-I..", "-I../" ]
 # Flags
 ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
+KEEP_LOGS=False
 
 def signal_handler(signal, frame):
     print('You pressed Ctrl+C!')
-    os.remove(BUILD_LIST)
+    if not KEEP_LOGS:
+        try:
+            os.remove('/tmp/*.ach')
+        except OSError, e:
+            pass
     sys.exit(0)
 
 class dotdict(dict):
@@ -57,7 +62,7 @@ def mkdir_p(path):
 def compileErrorCheck(p, cmd, output):
     if p.returncode:
         print >> sys.stderr, output
-        sys.exit("Archer encountered an error when invoking " + cmd + ". Exiting...")
+        sys.exit("Archer encountered an error when invoking [" + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + "]. Exiting...")
         
 def executeCommand(cmd, args):
     if args is not None and args.debug:
@@ -72,6 +77,7 @@ def argumentsParser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-v', '--version', action='version', version='Archer ' + VERSION + '\nCopyright (C) 2015')
     parser.add_argument('-d', '--debug', action='store_true', help='Print the compiling commands')
+    parser.add_argument('--log', action='store_true', help='Keep intermediate logs')
     parser.add_argument('-CC', nargs='?', default='clang', help='Change the program used to compile and link the programs')
     parser.add_argument('-OPT', nargs='?', default='opt', help='Change the program used to optmize the programs')
     parser.add_argument('-LINK', nargs='?', default='llvm-link', help='Change the program used to link the byte code files')
@@ -194,8 +200,9 @@ def archerLink(args):
         clangCommand.extend(arg.unknown)
         executeCommand(clangCommand, args)
     # Create blacklists and compile with fsanitize
-    
-    # os.remove(BUILD_LIST)
+
+    if not KEEP_LOGS:
+        os.remove(BUILD_LIST)
 
 if __name__ == '__main__':
 
@@ -216,6 +223,8 @@ if __name__ == '__main__':
     # parse command line arguments
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Compile your program with Archer support, a data race detector for OpenMP programs.', parents=[argumentsParser()])
     args, unknown = parser.parse_known_args()
+
+    KEEP_LOGS = args.log
 
     # find source file .c, .cc, .cpp, .cxx in unknown arguments
     if args.c is None:
