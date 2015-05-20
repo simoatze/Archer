@@ -32,20 +32,20 @@ ThreadSanitizer to provide portability.
 more information go to http://clang-omp.github.io).
 
 ** Building
-First obtain *Archer*, e.g. from Github (https://github.com/soarlab/Archer):
+First obtain Archer, e.g. from Github (https://github.com/soarlab/Archer):
 
 #+BEGIN_SRC sh :exports code
   git clone git@github.com:soarlab/Archer.git Archer
 #+END_SRC
 
-Then build *Archer* by running =install.sh=:
+Then build Archer by running =install.sh=:
 
 #+BEGIN_SRC sh :exports code
   ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
 #+END_SRC
 
 The installation script will create a folder called /LLVM/ at the same
-level of /Archer/. 
+level of Archer. 
 
 * Configuration
 

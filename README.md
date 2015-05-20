@@ -23,12 +23,11 @@
 <span style="font-weight: bold; font-variant: small-caps">archer</span> is a
 data race detector for OpenMP programs.
 
-<span style="font-variant:
-small-caps">archer</span> combines static and dynamic techniques to
-identify data races in large OpenMP applications, generating low
-runtime and memory overhead, while still offering high accuracy and
-precision. It builds on the open-source infrastructures LLVM and
-ThreadSanitizer to provide portability.
+<span style="font-variant: small-caps">archer</span> combines static and dynamic techniques to identify data races
+in large OpenMP applications, generating low runtime and memory
+overhead, while still offering high accuracy and precision. It builds
+on the open-source infrastructures LLVM and ThreadSanitizer to provide
+portability.
 
 # Installation<a id="sec-2" name="sec-2"></a>
 
