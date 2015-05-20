@@ -15,7 +15,7 @@ VERSION = '0.1'
 WORKING_DIR = os.getcwd()
 BUILD_LIST = '/tmp/buildList.ach'
 AR_FILE = '/tmp/ar.ach'
-RANLIBD_FILE = '/tmp/ranlib.ach'
+RANLIB_FILE = '/tmp/ranlib.ach'
 buildFile = None
 ARCHER_DIR = '.archer'
 INCLUDE_LIST = []
@@ -41,13 +41,13 @@ def signal_handler(signal, frame):
     print('You pressed Ctrl+C!')
     if not KEEP_LOGS:
         try:
-            os.remove('/tmp/*.ach')
+            pass
+            # os.remove('/tmp/*.ach')
         except OSError, e:
             pass
     sys.exit(0)
 
 class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
     def __getattr__(self, attr):
         return self.get(attr)
     __setattr__= dict.__setitem__
@@ -64,14 +64,15 @@ def mkdir_p(path):
 def compileErrorCheck(p, cmd, output):
     if p.returncode:
         print >> sys.stderr, output
-        sys.exit("Archer encountered an error when invoking [" + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + "]. Exiting...")
-        
+        sys.exit("Archer encountered an error when invoking [" + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + "].\nExiting...")
+
 def executeCommand(cmd, args):
     if args is not None and args.debug:
+        print('DEBUG-INFO: Path[' + os.getcwd() + "]")
         print('DEBUG-INFO: Command[' + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + ']')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
-    if output is not '':
+    if not output:
         print output
     compileErrorCheck(p, cmd, output)
 
@@ -81,6 +82,8 @@ def argumentsParser():
     parser.add_argument('-d', '--debug', action='store_true', help='Print the compiling commands')
     parser.add_argument('--log', action='store_true', help='Keep intermediate logs')
     parser.add_argument('-CC', nargs='?', default='clang', help='Change the program used to compile and link the programs')
+    parser.add_argument('-USE_MPI', action='store_true', help='Link against MPI libraries')
+    parser.add_argument('-MPICC', nargs='?', default='mpicc', help='Change the program used to compile and link the MPI programs')
     parser.add_argument('-OPT', nargs='?', default='opt', help='Change the program used to optmize the programs')
     parser.add_argument('-LINK', nargs='?', default='llvm-link', help='Change the program used to link the byte code files')
     parser.add_argument('-DIS', nargs='?', default='llvm-dis', help='Change the program used to disassemble the byte code files')
@@ -89,17 +92,18 @@ def argumentsParser():
     # parser.add_argument('-OPENMP_INCLUDE', nargs='?', default='', help='Set the path where to find OpenMP headers')
     # parser.add_argument('-MPI_INCLUDE', nargs='?', default='', help='Set the path where to find MPI headers')
     # parser.add_argument('-MPI_LIB', nargs='?', default='', help='Set the path where to find MPI libraries')
-    # parser.add_argument('-g', action='store_true')       
+    # parser.add_argument('-g', action='store_true')
     parser.add_argument('-g', action='store_true', help='If the debugging flag is not present in the compilation command it will be added by default')
     parser.add_argument('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz', action='store_true', help='The optimization flags will be forse to \'-O0\' optimization level for analysis purposes')
     parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
+    parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
     parser.add_argument('-c', nargs="?", default=None, help='Only run preprocess, compile, and assemble steps')
     parser.add_argument('-o', help='Output filename')
 
     return parser
 
 def archerBuild(args):
-    
+
     mkdir_p('.archer')
 
     # Create ByteCode
@@ -107,7 +111,7 @@ def archerBuild(args):
     clangCommand = [ args.CC ]
     clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT ]
     clangCommand.extend(args.unknown)
- 
+
     executeCommand(clangCommand, args)
     # No OpenMP Support
 
@@ -121,7 +125,7 @@ def archerBuild(args):
 
     # Changing dir to WORKING_DIR
     #os.chdir(ARCHER_DIR)
-   
+
     # Polly Pass
     optCommand = [ args.OPT ]
     optCommand += [ '-mem2reg', ARCHER_DIR + "/" + args.o + POLLY_BC_EXT, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT + OPT_EXT ]
@@ -130,7 +134,7 @@ def archerBuild(args):
     optCommand = [ args.OPT ]
     optCommand += [ '-S', '-polly-canonicalize', ARCHER_DIR + "/" + args.o + POLLY_BC_EXT + OPT_EXT, "-o", ARCHER_DIR + "/" + args.o + LL_EXT ]
     executeCommand(optCommand, args)
-    
+
     optCommand = [ args.OPT ]
     optCommand += [ '-load', args.LIB, ARCHER_DDA_FLAG, ARCHER_DIR + "/" + args.o + LL_EXT, "-o", ARCHER_DIR + "/" + args.o + "-optmized" + LL_EXT ]
     executeCommand(optCommand, args)
@@ -183,9 +187,10 @@ def archerLink(args):
     optCommand = [ args.OPT ]
     optCommand += [ "-load", args.LIB, "-archer-instcontext", ARCHER_DIR + "/" + args.o + LL_EXT, "-o", ARCHER_DIR + "/" + args.o + BC_EXT ]
     executeCommand(optCommand, args)
-    # Link byte code and run InstructionContext Pass            
+    # Link byte code and run InstructionContext Pass
 
     # Create blacklists and compile with fsanitize
+    objFileList = []
     for item in builds:
         blCommand = [ "archer-bl" ]
         blCommand += [ item[0], "0" ]
@@ -201,27 +206,56 @@ def archerLink(args):
         clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], "-c", item[0]]
         clangCommand.extend(arg.unknown)
         executeCommand(clangCommand, args)
+        objFileList.append(item[1])
     # Create blacklists and compile with fsanitize
 
     # Check if an ar command has been executed
     # if so execute them else link the object
     # files all together
+    current_path = os.getcwd()
     if os.path.isfile(AR_FILE):
         try:
+            # Create static libraries
             with open(AR_FILE, 'r') as file:
-                # Create static libraries
-                pass    
+                for line in file:
+                    lst = line.split(",", 1)
+                    os.chdir(lst[0])
+                    cmd = lst[1].split()
+                    executeCommand(cmd, args)
         except IOError as e:
             print "clang-argcher: No such file or directory or no read permissions"
-    else:
         try:
-            with open(AR_FILE, 'r') as file:
-                # Link objects file together
-                pass    
+            with open(RANLIB_FILE, 'r') as file:
+                for line in file:
+                    lst = line.split(",", 1)
+                    os.chdir(lst[0])
+                    cmd = lst[1].split()
+                    executeCommand(cmd, args)
         except IOError as e:
             print "clang-argcher: No such file or directory or no read permissions"
-        pass
 
+
+        # Link program
+        os.chdir(current_path)
+        if args.USE_MPI:
+            clangCommand = [ args.MPICC, '-cc=' + args.CC ]
+        else:
+            clangCommand = [ args.CC ]
+        clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
+        clangCommand.extend(args.unknown)
+        clangCommand += [ "-liomp5_tsan" ]
+        executeCommand(clangCommand, args)
+    else:
+        os.chdir(current_path)
+        if args.USE_MPI:
+            clangCommand = [ args.MPICC, '-cc=' + args.CC ]
+        else:
+            clangCommand = [ args.CC ]
+        clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
+        clangCommand.extend(args.unknown)
+        clangCommand += [ "-liomp5_tsan" ]
+        executeCommand(clangCommand, args)
+        
     # if not KEEP_LOGS:
     #     os.remove('/tmp/*.ach')
 
@@ -265,13 +299,10 @@ if __name__ == '__main__':
                     LINKING=True
                     break
             else:
-                sys.exit("Archer encountered an error when parsing parameters. Exiting...")
+                sys.exit("Archer encountered an error when parsing parameters.\nExiting...")
     else:
         args.__dict__['src'] = args.c
         args.__dict__['unknown'] = unknown
-
-    # archerLink(args)
-    # sys.exit()    
 
     # Keep list of compiled file
     if args.src is not None:
