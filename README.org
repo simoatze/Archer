@@ -15,7 +15,7 @@
 #+XSLT:
 
 * Introduction
-#+HTML: <img src="resources/images/archer_logo.png" height="50%" width="50%" alt="Archer Logo" title="Archer" align="right" />
+#+HTML: <img src="resources/images/archer_logo.png" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
 *Archer* is a data race detector for OpenMP programs.
 
