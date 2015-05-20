@@ -21,7 +21,7 @@
 <img src="resources/images/archer_logo.png" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
 **Archer** is a data race detector for OpenMP programs.
-<!&#x2013; <span style="font-weight: bold; font-variant: small-caps">archer</span> &#x2013;>
+
 
 Archer combines static and dynamic techniques to
 identify data races in large OpenMP applications, generating low
@@ -45,7 +45,7 @@ Then build Archer by running `install.sh`:
     ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
 
 The installation script will create a folder called *LLVM* at the same
-level of Archer. 
+level of Archer.
 
 # Configuration<a id="sec-3" name="sec-3"></a>
 
