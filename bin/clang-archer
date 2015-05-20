@@ -5,6 +5,7 @@ import errno
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -14,6 +15,7 @@ VERSION = '0.1'
 # Working Dirs
 WORKING_DIR = os.getcwd()
 BUILD_LIST = '/tmp/buildList.ach'
+LOGS_LIST = '/tmp/logsList.ach'
 AR_FILE = '/tmp/ar.ach'
 RANLIB_FILE = '/tmp/ranlib.ach'
 buildFile = None
@@ -37,12 +39,18 @@ ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
 KEEP_LOGS=False
 
+def cleanLogs():
+    file = open(LOGS_LIST, "r")
+    for line in file:
+        shutil.rmtree(line.split('\n')[0], ignore_errors = True)
+    file.close()
+    os.system("rm -rf /tmp/*.ach")
+
 def signal_handler(signal, frame):
     print('You pressed Ctrl+C!')
     if not KEEP_LOGS:
         try:
-            pass
-            # os.remove('/tmp/*.ach')
+            cleanLogs()
         except OSError, e:
             pass
     sys.exit(0)
@@ -53,11 +61,16 @@ class dotdict(dict):
     __setattr__= dict.__setitem__
     __delattr__= dict.__delitem__
 
+def logPath(path):
+    file = open(LOGS_LIST, "a")
+    file.write(path + "\n")
+    file.close()
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
-    except OSError as exc: # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
 
@@ -105,6 +118,7 @@ def argumentsParser():
 def archerBuild(args):
 
     mkdir_p('.archer')
+    logPath(os.getcwd() + "/.archer")
 
     # Create ByteCode
     # No OpenMP Support
@@ -157,6 +171,7 @@ def archerLink(args):
 
     # Creating and changing to WORKING_DIR
     mkdir_p('.archer')
+    logPath(os.getcwd() + "/.archer")
     # os.chdir(ARCHER_DIR)
 
     builds = []
@@ -255,9 +270,9 @@ def archerLink(args):
         clangCommand.extend(args.unknown)
         clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
-        
-    # if not KEEP_LOGS:
-    #     os.remove('/tmp/*.ach')
+
+    if not KEEP_LOGS:
+        cleanLogs()
 
 if __name__ == '__main__':
 
