@@ -18,6 +18,7 @@ BUILD_LIST = '/tmp/buildList.ach'
 LOGS_LIST = '/tmp/logsList.ach'
 AR_FILE = '/tmp/ar.ach'
 RANLIB_FILE = '/tmp/ranlib.ach'
+LOGS_FLAG = '/tmp/clang-archer-log.ach'
 buildFile = None
 ARCHER_DIR = '.archer'
 INCLUDE_LIST = []
@@ -53,6 +54,10 @@ def signal_handler(signal, frame):
             cleanLogs()
         except OSError, e:
             pass
+    else:
+        with open(LOGS_FLAG, "w") as f:
+            f.write('1')
+            f.close()
     sys.exit(0)
 
 class dotdict(dict):
@@ -77,6 +82,12 @@ def mkdir_p(path):
 def compileErrorCheck(p, cmd, output):
     if p.returncode:
         print >> sys.stderr, output
+        if not KEEP_LOGS:
+            cleanLogs()
+        else:
+            with open(LOGS_FLAG, "w") as f:
+                f.write('1')
+                f.close()
         sys.exit("Archer encountered an error when invoking [" + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + "].\nExiting...")
 
 def executeCommand(cmd, args):
@@ -85,8 +96,6 @@ def executeCommand(cmd, args):
         print('DEBUG-INFO: Command[' + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + ']')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
-    if not output:
-        print output
     compileErrorCheck(p, cmd, output)
 
 def argumentsParser():
@@ -167,7 +176,7 @@ def archerBuild(args):
     # Clang Plugin to find OpenMP constructs information
 
 def archerLink(args):
-    print "Ready for linking..."
+    print "Linking..."
 
     # Creating and changing to WORKING_DIR
     mkdir_p('.archer')
@@ -273,10 +282,20 @@ def archerLink(args):
 
     if not KEEP_LOGS:
         cleanLogs()
+    else:
+        with open(LOGS_FLAG, "w") as f:
+            f.write('1')
+            f.close()
 
 if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signal_handler)
+
+    if os.path.exists(LOGS_FLAG):
+        with open(LOGS_FLAG, "r") as f:
+            line = f.readline()
+            if line == '1':
+                cleanLogs()
 
     buildFile = open(BUILD_LIST, "a")
 
@@ -323,6 +342,12 @@ if __name__ == '__main__':
     if args.src is not None:
         buildFile.write(os.path.abspath(args.src) + "," + os.path.abspath(args.o) + "," + json.dumps(args.__dict__) + '\n')
     buildFile.close()
+
+    if KEEP_LOGS:
+        if not os.path.exists(LOGS_FLAG):
+            with open(LOGS_FLAG, "w") as f:
+                f.write('0')
+                f.close()
 
     # args.OPENMP_INCLUDE = "-I" + args.OPENMP_INCLUDE if (args.OPENMP_INCLUDE is not '') else ''
     # args.MPI_INCLUDE = "-I" + args.MPI_INCLUDE if (args.MPI_INCLUDE is not '') else ''
