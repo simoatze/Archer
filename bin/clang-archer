@@ -38,6 +38,7 @@ LOCAL_INCLUDE=[ "-I..", "-I../" ]
 # Flags
 ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
+COMPILE_AND_LINK=False
 KEEP_LOGS=False
 
 def cleanLogs():
@@ -119,8 +120,8 @@ def argumentsParser():
     parser.add_argument('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz', action='store_true', help='The optimization flags will be forse to \'-O0\' optimization level for analysis purposes')
     parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
     parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
-    parser.add_argument('-c', nargs="?", default=None, help='Only run preprocess, compile, and assemble steps')
-    parser.add_argument('-o', help='Output filename')
+    parser.add_argument('-c', nargs='?', default=None, help='Only run preprocess, compile, and assemble steps')
+    parser.add_argument('-o', nargs='?', default='a.out', help='Output filename')
 
     return parser
 
@@ -269,6 +270,16 @@ def archerLink(args):
         clangCommand.extend(args.unknown)
         clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
+    elif COMPILE_AND_LINK:
+        os.chdir(current_path)
+        if args.USE_MPI:
+            clangCommand = [ args.MPICC, '-cc=' + args.CC ]
+        else:
+            clangCommand = [ args.CC ]
+        clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.src ]
+        clangCommand.extend(args.unknown)
+        clangCommand += [ "-liomp5_tsan" ]
+        executeCommand(clangCommand, args)
     else:
         os.chdir(current_path)
         if args.USE_MPI:
@@ -322,6 +333,7 @@ if __name__ == '__main__':
                 args.__dict__['src'] = arg
                 unknown.remove(arg)
                 args.__dict__['unknown'] = unknown
+                COMPILE_AND_LINK=True
                 break
         if 'src' not in args.__dict__:
             for arg in unknown:
@@ -352,7 +364,12 @@ if __name__ == '__main__':
     # args.OPENMP_INCLUDE = "-I" + args.OPENMP_INCLUDE if (args.OPENMP_INCLUDE is not '') else ''
     # args.MPI_INCLUDE = "-I" + args.MPI_INCLUDE if (args.MPI_INCLUDE is not '') else ''
 
-    if not LINKING:
+    if COMPILE_AND_LINK:
+        print "Compiling and Linking"
         archerBuild(args)
-    else:
         archerLink(args)
+    else:
+        if not LINKING:
+            archerBuild(args)
+        else:
+            archerLink(args)
