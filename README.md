@@ -22,6 +22,12 @@
 
 **Archer** is a data race detector for OpenMP programs.
 
+**Archer** combines static and dynamic techniques to identify data races
+in large OpenMP applications, generating low runtime and memory
+overhead, while still offering high accuracy and precision. It builds
+on the open-source infrastructures LLVM and ThreadSanitizer to provide
+portability.
+
 # Installation<a id="sec-2" name="sec-2"></a>
 
 **Archer** has been developed under LLVM 3.5 with OpenMP support (for
