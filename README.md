@@ -15,14 +15,19 @@
 </div>
 </div>
 
-# Introduction
 
-# Installation
+# Introduction<a id="sec-1" name="sec-1"></a>
+
+<img src="docs/images/archer_logo.svg" alt="Archer Logo" title="Archer" align="right" />
+
+**Archer** is a data race detector for OpenMP programs.
+
+# Installation<a id="sec-2" name="sec-2"></a>
 
 **Archer** has been developed under LLVM 3.5 with OpenMP support (for
 more information go to <http://clang-omp.github.io>).
 
-## Building
+## Building<a id="sec-2-1" name="sec-2-1"></a>
 
 First obtain **Archer**, e.g. from Github (<https://github.com/soarlab/Archer>):
 
@@ -35,8 +40,8 @@ Then build **Archer** by running `install.sh`:
 The installation script will create a folder called *LLVM* at the same
 level of *Archer*. 
 
-# Configuration
+# Configuration<a id="sec-3" name="sec-3"></a>
 
-# Usage
+# Usage<a id="sec-4" name="sec-4"></a>
 
-# Copyright
+# Copyright<a id="sec-5" name="sec-5"></a>

@@ -15,6 +15,9 @@
 #+XSLT:
 
 * Introduction
+#+HTML: <img src="docs/images/archer_logo.svg" alt="Archer Logo" title="Archer" align="right" />
+
+*Archer* is a data race detector for OpenMP programs.
 
 * Installation
 *Archer* has been developed under LLVM 3.5 with OpenMP support (for
