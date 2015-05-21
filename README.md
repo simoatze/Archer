@@ -19,7 +19,7 @@
 
 # Introduction<a id="sec-1" name="sec-1"></a>
 
-<img src="resources/images/archer_logo.png" hspace="15" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
+<img src="resources/images/archer_logo.png" hspace="10" vspace="10" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
 **Archer** is a data race detector for OpenMP programs.
 
