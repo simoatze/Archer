@@ -150,7 +150,7 @@ cd ${LLVMRT_SRC}
 patch -p 1 < ${WORKING_DIR}/patch/compiler-rt-intelomprt.patch
 cd ${INTELOMPRT}
 tar xzvf ${INTELOMPRT_FILE}
-patch -p 1 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
+# patch -p 0 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
 
 # Compiling and installing Cloog (dependency for Polly)
 echo
@@ -187,7 +187,7 @@ cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 make -j${PROCS} -l${PROCS}
 cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib ${LLVM_INSTALL}/lib/intelomprt
 # Installing Instrumented Intel OpenMP Runtime (temporary until patch)
-# cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
+cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
 
 # Compiling and installing Archer
 echoc "Building Archer..."
