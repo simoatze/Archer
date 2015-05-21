@@ -16,9 +16,6 @@ $(LIB_DIR):
 $(PROG): $(O_FILES)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(LIB_DIR)/$(PROG) $(SHARED_LIB_OPT) $(O_FILES)
 
-archer-cmp:
-	$(CXX) $(CPPFLAGS) -o $(BIN_DIR)/archer-cmp archer-cmp.cpp Util.o
-
 archer-bl:
 	$(CXX) $(CPPFLAGS) -o $(BIN_DIR)/archer-bl archer-bl.cpp Util.o
 
