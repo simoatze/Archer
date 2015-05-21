@@ -77,6 +77,7 @@ void ArcherDDA::printScop(raw_ostream &OS) const {
 bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   polly::Scop *S;
   std::string content;
+  std::string FileName;
 
   S = &Scop;
   std::string FunctionName = S->getRegion().getEntry()->getParent()->getName();
@@ -95,6 +96,7 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   	DILocation Loc(N);                      
   	unsigned Line = Loc.getLineNumber();
   	StringRef File = Loc.getFilename();
+	FileName = File.str();
   	StringRef Dir = Loc.getDirectory();
 
 	// llvm::dbgs() << "Line: " << Line << " - File: " << File << " - Dir: " << Dir << " - Value: " << isNotDependency << "\n";
@@ -122,15 +124,15 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
   }
 
   std::string path = dir + "/";
-  std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
-  std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
-  int pos = filename.first.str().find(".nomp.bc");
-  std::string FileName;
-  if(pos != std::string::npos) {
-    FileName = filename.first.str().substr(0,pos);
-  } else {
-    FileName = filename.first.str();
-  }
+  // std::string ModuleName = S->getRegion().getEntry()->getParent()->getParent()->getModuleIdentifier();
+  // std::pair<StringRef, StringRef> filename = StringRef(ModuleName).rsplit('.');
+  // int pos = filename.first.str().find(".nomp.bc");
+  // std::string FileName;
+  // if(pos != std::string::npos) {
+  //   FileName = filename.first.str().substr(0,pos);
+  // } else {
+  //   FileName = filename.first.str();
+  // }
   if(FileName.substr(0,2).compare("./") == 0)
     FileName = FileName.substr(2);
   std::string filepath;
@@ -147,7 +149,6 @@ bool ArcherDDA::getLOCInfo(polly::Scop &Scop, bool isNotDependency) {
     FileName = filepath + ND_LINES;
   else
     FileName = filepath + DD_LINES;
-
   std::string ErrInfo;
   tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Append);
 

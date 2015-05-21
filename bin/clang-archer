@@ -30,6 +30,7 @@ OPT_EXT = ".opt"
 BC_EXT = ".bc"
 LL_EXT = ".ll"
 BL_EXT = ".bl"
+O_EXT = ".o"
 SOURCE_EXT = ['.c', '.cc', '.cpp', '.cxx']
 OBJ_EXT = ['.o']
 LIB_EXT = ['.a']
@@ -97,6 +98,9 @@ def executeCommand(cmd, args):
         print('DEBUG-INFO: Command[' + cmd[0] + ''.join(' ' + s for s in cmd[1:]) + ']')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
+    regex = re.compile(r'\s+')
+    if regex.sub('', output) is not '':
+        print output
     compileErrorCheck(p, cmd, output)
 
 def argumentsParser():
@@ -117,7 +121,7 @@ def argumentsParser():
     # parser.add_argument('-MPI_LIB', nargs='?', default='', help='Set the path where to find MPI libraries')
     # parser.add_argument('-g', action='store_true')
     parser.add_argument('-g', action='store_true', help='If the debugging flag is not present in the compilation command it will be added by default')
-    parser.add_argument('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz', action='store_true', help='The optimization flags will be forse to \'-O0\' optimization level for analysis purposes')
+    parser.add_argument('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz', '--OPTIM', nargs='?', default='O0', help='The optimization flags will be forced to \'-O0\' optimization level for analysis purposes')
     parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
     parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
     parser.add_argument('-c', nargs='?', default=None, help='Only run preprocess, compile, and assemble steps')
@@ -133,7 +137,7 @@ def archerBuild(args):
     # Create ByteCode
     # No OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT ]
+    clangCommand += [ "-Qunused-arguments", "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT ]
     clangCommand.extend(args.unknown)
 
     executeCommand(clangCommand, args)
@@ -141,7 +145,7 @@ def archerBuild(args):
 
     # OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + OMP_BC_EXT ]
+    clangCommand += [ "-Qunused-arguments", "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + OMP_BC_EXT ]
     clangCommand.extend(args.unknown)
     executeCommand(clangCommand, args)
     # OpenMP Support
@@ -166,7 +170,7 @@ def archerBuild(args):
 
     # Clang Plugin to find OpenMP constructs information
     clangCommand = [ args.CC ]
-    clangCommand += [ "-O0", "-g", "-fopenmp", "-c", args.src ]
+    clangCommand += [ "-Qunused-arguments", "-O0", "-g", "-fopenmp", "-c", args.src ]
     clangCommand.extend(args.unknown)
     # lst = filter(lambda item: any(x in item for x in LOCAL_INCLUDE), args.unknown)
     # if lst:
@@ -215,23 +219,24 @@ def archerLink(args):
     # Link byte code and run InstructionContext Pass
 
     # Create blacklists and compile with fsanitize
-    objFileList = []
-    for item in builds:
-        blCommand = [ "archer-bl" ]
-        blCommand += [ item[0], "0" ]
-        executeCommand(blCommand, args)
+    if not COMPILE_AND_LINK:
+        objFileList = []
+        for item in builds:
+            blCommand = [ "archer-bl" ]
+            blCommand += [ item[0], "0" ]
+            executeCommand(blCommand, args)
 
         arg = item[2]
         clangCommand = [ arg.CC ]
         clangCommand += [ "-g", "-O0" ]
         if(arg.fopenmp):
             clangCommand += [ "-fopenmp" ]
-        lst = item[0].rsplit("/", 1)
-        blacklist = lst[0] + "/.archer/blacklists/" + lst[1] + BL_EXT
-        clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], "-c", item[0]]
-        clangCommand.extend(arg.unknown)
-        executeCommand(clangCommand, args)
-        objFileList.append(item[1])
+            lst = item[0].rsplit("/", 1)
+            blacklist = lst[0] + "/.archer/blacklists/" + lst[1] + BL_EXT
+            clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], "-c", item[0]]
+            clangCommand.extend(arg.unknown)
+            executeCommand(clangCommand, args)
+            objFileList.append(item[1])
     # Create blacklists and compile with fsanitize
 
     # Check if an ar command has been executed
@@ -276,7 +281,11 @@ def archerLink(args):
             clangCommand = [ args.MPICC, '-cc=' + args.CC ]
         else:
             clangCommand = [ args.CC ]
-        clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.src ]
+        blCommand = [ "archer-bl" ]
+        blCommand += [ args.src, "0" ]
+        executeCommand(blCommand, args)
+        blacklist = current_path + "/.archer/blacklists/" + args.src + BL_EXT
+        clangCommand += [ "-g", "-" + args.OPTIM, "-fopenmp", "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", args.o, args.src ]
         clangCommand.extend(args.unknown)
         clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
