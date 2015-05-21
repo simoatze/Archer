@@ -1,5 +1,5 @@
-diff -rupN libomp_oss_orig/src/dynamic_annotations.h libomp_oss/src/dynamic_annotations.h
---- libomp_oss_orig/src/dynamic_annotations.h	1969-12-31 16:00:00.000000000 -0800
+diff -rupN libomp_oss/src/dynamic_annotations.h libomp_oss/src/dynamic_annotations.h
+--- libomp_oss/src/dynamic_annotations.h	1969-12-31 16:00:00.000000000 -0800
 +++ libomp_oss/src/dynamic_annotations.h	2014-09-23 10:38:43.000000000 -0700
 @@ -0,0 +1,661 @@
 +/* Copyright (c) 2011, Google Inc.
@@ -663,8 +663,8 @@ diff -rupN libomp_oss_orig/src/dynamic_annotations.h libomp_oss/src/dynamic_anno
 +#endif /* DYNAMIC_ANNOTATIONS_ENABLED */
 +
 +#endif /* __DYNAMIC_ANNOTATIONS_H__ */
-diff -rupN libomp_oss_orig/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
---- libomp_oss_orig/src/kmp_lock.cpp	2013-12-13 10:08:47.000000000 -0800
+diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
+--- libomp_oss/src/kmp_lock.cpp	2013-12-13 10:08:47.000000000 -0800
 +++ libomp_oss/src/kmp_lock.cpp	2014-09-23 10:38:44.000000000 -0700
 @@ -42,6 +42,8 @@
  #include "kmp_lock.h"
@@ -827,8 +827,8 @@ diff -rupN libomp_oss_orig/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  
          // Insert lock in the table so that it can be freed in __kmp_cleanup,
          // and debugger has info on all allocated locks.
-diff -rupN libomp_oss_orig/src/kmp_runtime.c libomp_oss/src/kmp_runtime.c
---- libomp_oss_orig/src/kmp_runtime.c	2013-12-13 10:08:47.000000000 -0800
+diff -rupN libomp_oss/src/kmp_runtime.c libomp_oss/src/kmp_runtime.c
+--- libomp_oss/src/kmp_runtime.c	2013-12-13 10:08:47.000000000 -0800
 +++ libomp_oss/src/kmp_runtime.c	2014-09-23 10:38:44.000000000 -0700
 @@ -68,6 +68,7 @@
  #include <process.h>
@@ -942,8 +942,8 @@ diff -rupN libomp_oss_orig/src/kmp_runtime.c libomp_oss/src/kmp_runtime.c
              __kmp_release(
                  thread,
                  &thread->th.th_bar[ bs_forkjoin_barrier ].bb.b_go,
-diff -rupN libomp_oss_orig/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
---- libomp_oss_orig/src/kmp_tasking.c	2013-12-13 10:08:48.000000000 -0800
+diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
+--- libomp_oss/src/kmp_tasking.c	2013-12-13 10:08:48.000000000 -0800
 +++ libomp_oss/src/kmp_tasking.c	2014-09-23 10:38:44.000000000 -0700
 @@ -38,6 +38,7 @@
  #include "kmp_i18n.h"
@@ -1038,8 +1038,8 @@ diff -rupN libomp_oss_orig/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
  #ifdef BUILD_TIED_TASK_STACK
                  // GEH: Figure out if this is the right thing to do
                  for (i = 0; i < nthreads; i++) {
-diff -rupN libomp_oss_orig/src/makefile.mk libomp_oss/src/makefile.mk
---- libomp_oss_orig/src/makefile.mk	2013-12-13 10:08:48.000000000 -0800
+diff -rupN libomp_oss/src/makefile.mk libomp_oss/src/makefile.mk
+--- libomp_oss/src/makefile.mk	2013-12-13 10:08:48.000000000 -0800
 +++ libomp_oss/src/makefile.mk	2014-09-23 10:38:44.000000000 -0700
 @@ -116,6 +116,7 @@ define curr_config
      CXXFLAGS=$(subst $(space),_,$(CXXFLAGS))
@@ -1084,8 +1084,8 @@ diff -rupN libomp_oss_orig/src/makefile.mk libomp_oss/src/makefile.mk
          endif
          tt-c-flags += -o $(tt-exe-file)
          ifneq "$(filter 32 32e 64,$(arch))" ""
-diff -rupN libomp_oss_orig/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
---- libomp_oss_orig/src/z_Linux_util.c	2013-12-13 10:08:48.000000000 -0800
+diff -rupN libomp_oss/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
+--- libomp_oss/src/z_Linux_util.c	2013-12-13 10:08:48.000000000 -0800
 +++ libomp_oss/src/z_Linux_util.c	2014-09-23 10:38:44.000000000 -0700
 @@ -49,6 +49,8 @@
  #include <sys/resource.h>
@@ -1167,8 +1167,8 @@ diff -rupN libomp_oss_orig/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
      };
  }
  
-diff -rupN libomp_oss_orig/tools/build.pl libomp_oss/tools/build.pl
---- libomp_oss_orig/tools/build.pl	2013-12-13 10:08:50.000000000 -0800
+diff -rupN libomp_oss/tools/build.pl libomp_oss/tools/build.pl
+--- libomp_oss/tools/build.pl	2013-12-13 10:08:50.000000000 -0800
 +++ libomp_oss/tools/build.pl	2014-09-23 10:38:45.000000000 -0700
 @@ -88,12 +88,13 @@ my $opts = {
      "mic-arch"        => { targets => "rtl",               base => 0, parms => { knf     => "*", knc       => "", knl => ""   }, suffix => sub { $_[ 0 ];                       } },
@@ -1193,8 +1193,8 @@ diff -rupN libomp_oss_orig/tools/build.pl libomp_oss/tools/build.pl
                      @goals,
                  ],
                  build_dir  => $build_dir
-diff -rupN libomp_oss_orig/tools/check-tools.pl libomp_oss/tools/check-tools.pl
---- libomp_oss_orig/tools/check-tools.pl	2013-12-13 10:08:50.000000000 -0800
+diff -rupN libomp_oss/tools/check-tools.pl libomp_oss/tools/check-tools.pl
+--- libomp_oss/tools/check-tools.pl	2013-12-13 10:08:50.000000000 -0800
 +++ libomp_oss/tools/check-tools.pl	2014-09-23 10:38:45.000000000 -0700
 @@ -321,7 +321,7 @@ sub get_clang_compiler_version($) {
              ( $ver, $bld ) = ( $1, $2 );

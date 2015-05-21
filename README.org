@@ -27,7 +27,7 @@ precision. It builds on the open-source infrastructures LLVM and
 ThreadSanitizer to provide portability.
 
 * Installation
-*Archer* has been developed under LLVM 3.5 with OpenMP support (for
+Archer has been developed under LLVM 3.5 with OpenMP support (for
 more information go to http://clang-omp.github.io).
 
 ** Building
@@ -49,5 +49,7 @@ level of Archer.
 * Configuration
 
 * Usage
+
+* FAQ
 
 * Copyright

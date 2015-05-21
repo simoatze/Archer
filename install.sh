@@ -70,7 +70,9 @@ LLVM_DEP=${LLVM_BUILD}/dependencies
 mkdir -p ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
 CLOOG_INSTALL=${LLVM_DEP}/cloog_install
-INTELOMPRT_FILE=libomp_20140926_oss.tgz
+# INTELOMPRT_VERSION=20131209
+INTELOMPRT_VERSION=20140716
+INTELOMPRT_FILE=libomp_${INTELOMPRT_VERSION}_oss.tgz
 
 # Obtaining the sources
 
@@ -110,7 +112,8 @@ else
     git clone git@github.com:llvm-mirror/polly.git ${POLLY_SRC}
 fi
 cd ${POLLY_SRC}
-git checkout ${POLLY_COMMIT}
+# git checkout ${POLLY_COMMIT}
+git reset --hard ${POLLY_COMMIT}
 
 # Intel OpenMP Runtime Sources
 mkdir ${INTELOMPRT}
@@ -132,17 +135,22 @@ echoc "Patching Clang..."
 cd ${CLANG_SRC}
 patch -p 1 < ${WORKING_DIR}/patch/clang.patch
 
-# # Polly Patch
+# Polly Patch
 echo
 echoc "Patching Polly..."
 cd ${POLLY_SRC}
 patch -p 1 < ${WORKING_DIR}/patch/polly.patch
 
-# # Intel OpenMP Runtime Patch
-# echo
-# echoc "Patching Intel OpenMP Runtime..."
-# cd ${INTELOMPRT}
-# patch -p 1 < ${WORKING_DIR}/patch/intelomprt.patch
+# Intel OpenMP Runtime Patch
+echo
+echoc "Patching Intel OpenMP Runtime..."
+cd ${CLANG_SRC}
+patch -p 1 < ${WORKING_DIR}/patch/clang-intelomprt.patch
+cd ${LLVMRT_SRC}
+patch -p 1 < ${WORKING_DIR}/patch/compiler-rt-intelomprt.patch
+cd ${INTELOMPRT}
+tar xzvf ${INTELOMPRT_FILE}
+patch -p 1 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
 
 # Compiling and installing Cloog (dependency for Polly)
 echo
@@ -174,13 +182,12 @@ make install
 # Compiling and installing Intel OpenMP Runtime
 echoc "Building Intel OpenMP Runtime..."
 cd ${INTELOMPRT}
-tar xzvf ${INTELOMPRT_FILE}
 cd libomp_oss/cmake
 cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 make -j${PROCS} -l${PROCS}
 cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib ${LLVM_INSTALL}/lib/intelomprt
 # Installing Instrumented Intel OpenMP Runtime (temporary until patch)
-cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
+# cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
 
 # Compiling and installing Archer
 echoc "Building Archer..."

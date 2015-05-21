@@ -10,7 +10,8 @@
 </li>
 <li><a href="#sec-3">3. Configuration</a></li>
 <li><a href="#sec-4">4. Usage</a></li>
-<li><a href="#sec-5">5. Copyright</a></li>
+<li><a href="#sec-5">5. FAQ</a></li>
+<li><a href="#sec-6">6. Copyright</a></li>
 </ul>
 </div>
 </div>
@@ -31,7 +32,7 @@ ThreadSanitizer to provide portability.
 
 # Installation<a id="sec-2" name="sec-2"></a>
 
-**Archer** has been developed under LLVM 3.5 with OpenMP support (for
+Archer has been developed under LLVM 3.5 with OpenMP support (for
 more information go to <http://clang-omp.github.io>).
 
 ## Building<a id="sec-2-1" name="sec-2-1"></a>
@@ -51,4 +52,6 @@ level of Archer.
 
 # Usage<a id="sec-4" name="sec-4"></a>
 
-# Copyright<a id="sec-5" name="sec-5"></a>
+# FAQ<a id="sec-5" name="sec-5"></a>
+
+# Copyright<a id="sec-6" name="sec-6"></a>
