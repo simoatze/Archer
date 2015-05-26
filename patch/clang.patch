@@ -1,29 +1,29 @@
 diff --git a/lib/CodeGen/CodeGenModule.cpp b/lib/CodeGen/CodeGenModule.cpp
-index a77dbc0..631726b 100644
+index fe73a97..ec34454 100644
 --- a/lib/CodeGen/CodeGenModule.cpp
 +++ b/lib/CodeGen/CodeGenModule.cpp
-@@ -396,6 +396,21 @@ void CodeGenModule::Release() {
-
+@@ -394,6 +394,21 @@ void CodeGenModule::Release() {
+   EmitVersionIdentMetadata();
+ 
    EmitTargetMetadata();
-
++
 +#ifdef ARCHER
 +  /// Insert metadata to instructions
 +  for (llvm::Function &F : getModule()) {
 +    for (auto &BB : F) {
 +      for (auto &Inst : BB) {
-+      if(SanitizerBL.isIn(Inst)) {
-+        llvm::LLVMContext& C = Inst.getContext();
-+          llvm::MDNode* N = llvm::MDNode::get(C, llvm::MDString::get(C, "not instru
-+            Inst.setMetadata("archer.tsan.bl", N);
-+            }
++	if(SanitizerBL.isIn(Inst)) {
++	  llvm::LLVMContext& C = Inst.getContext();
++	  llvm::MDNode* N = llvm::MDNode::get(C, llvm::MDString::get(C, "not instument"));
++	  Inst.setMetadata("archer.tsan.bl", N);
++	}
 +      }
 +    }
 +  }
 +#endif // ARCHER
-+
-   //Let OpenMP implementation to post-process the module
-   if (OpenMPRuntime)
-     OpenMPRuntime->PostProcessModule(*this);
+ }
+ 
+ void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
 diff -rupN a/lib/CodeGen/SanitizerBlacklist.cpp b/lib/CodeGen/SanitizerBlacklist.cpp
 --- a/lib/CodeGen/SanitizerBlacklist.cpp	2014-10-26 23:20:37.000000000 -0600
 +++ b/lib/CodeGen/SanitizerBlacklist.cpp	2014-10-26 23:13:00.000000000 -0600

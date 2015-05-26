@@ -1,11 +1,12 @@
-diff -rupN libomp_oss/Makefile libomp_oss/Makefile
---- libomp_oss/Makefile	2014-07-16 05:09:39.000000000 -0700
-+++ libomp_oss/Makefile	2014-09-25 09:19:28.000000000 -0700
+diff --git a/Makefile b/Makefile
+index 40e0327..e6cd784 100644
+--- a/Makefile
++++ b/Makefile
 @@ -29,6 +29,8 @@
  # </copyright>
  
  omp_root?=.
-?=enabled
++tsan?=enabled
 +
  include $(omp_root)/tools/common.inc
  .PHONY: default all omp
@@ -27,9 +28,10 @@ diff -rupN libomp_oss/Makefile libomp_oss/Makefile
  
  .PHONY: clean info
  
-diff -rupN libomp_oss/src/dynamic_annotations.h libomp_oss/src/dynamic_annotations.h
---- libomp_oss/src/dynamic_annotations.h	1969-12-31 16:00:00.000000000 -0800
-+++ libomp_oss/src/dynamic_annotations.h	2014-09-24 16:59:33.836319000 -0700
+diff --git a/src/dynamic_annotations.h b/src/dynamic_annotations.h
+index e69de29..e595d74 100644
+--- a/src/dynamic_annotations.h
++++ b/src/dynamic_annotations.h
 @@ -0,0 +1,661 @@
 +/* Copyright (c) 2011, Google Inc.
 +* All rights reserved.
@@ -692,9 +694,10 @@ diff -rupN libomp_oss/src/dynamic_annotations.h libomp_oss/src/dynamic_annotatio
 +#endif /* DYNAMIC_ANNOTATIONS_ENABLED */
 +
 +#endif /* __DYNAMIC_ANNOTATIONS_H__ */
-diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
---- libomp_oss/src/kmp_barrier.cpp	2014-07-16 05:09:34.000000000 -0700
-+++ libomp_oss/src/kmp_barrier.cpp	2014-09-24 17:50:45.686102000 -0700
+diff --git a/src/kmp_barrier.cpp b/src/kmp_barrier.cpp
+index ac6f459..47600d8 100644
+--- a/src/kmp_barrier.cpp
++++ b/src/kmp_barrier.cpp
 @@ -56,6 +56,8 @@
  #define ngo_sync()               ((void)0)
  #endif /* KMP_MIC && USE_NGO_STORES */
@@ -704,7 +707,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  #ifndef KMP_DEBUG
  #define __kmp_static_delay(arg)  // nothing to do
  #else
-@@ -479,6 +481,7 @@ __kmp_linear_barrier_gather(enum barrier
+@@ -479,6 +481,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
          // Mark arrival to master thread
          /* After performing this write, a worker thread may not assume that the team is valid
             any more - it could be deallocated by the master thread at any time. */
@@ -712,7 +715,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
          __kmp_release(other_threads[0], (kmp_uint32 *)&thr_bar->b_arrived);
      } else {
          register kmp_balign_team_t *team_bar = &team->t.t_bar[bt];
-@@ -503,6 +506,7 @@ __kmp_linear_barrier_gather(enum barrier
+@@ -503,6 +506,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
              __kmp_wait_sleep_64(this_thr, &other_threads[i]->th.th_bar[bt].bb.b_arrived,
                               new_state, FALSE
                               USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -720,7 +723,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
              // Barrier imbalance - write min of the thread time and the other thread time to the thread.
              if (__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
-@@ -575,6 +579,7 @@ __kmp_linear_barrier_release(enum barrie
+@@ -575,6 +579,7 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
                                &other_threads[i]->th.th_bar[bt].bb.b_go,
                                other_threads[i]->th.th_bar[bt].bb.b_go,
                                other_threads[i]->th.th_bar[bt].bb.b_go + KMP_BARRIER_STATE_BUMP));
@@ -728,7 +731,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                  __kmp_release(other_threads[i], (kmp_uint32 *)&other_threads[i]->th.th_bar[bt].bb.b_go);
              }
          }
-@@ -584,6 +589,7 @@ __kmp_linear_barrier_release(enum barrie
+@@ -584,6 +589,7 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
          __kmp_wait_sleep_64(this_thr, &thr_bar->b_go, KMP_BARRIER_STATE_BUMP, TRUE
                           USE_ITT_BUILD_ARG(itt_sync_obj)
                           );
@@ -736,7 +739,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
          if ((__itt_sync_create_ptr && itt_sync_obj == NULL) || KMP_ITT_DEBUG) {
-@@ -667,6 +673,7 @@ __kmp_tree_barrier_gather(enum barrier_t
+@@ -667,6 +673,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
              // Wait for child to arrive
              __kmp_wait_sleep_64(this_thr, &child_bar->b_arrived, new_state, FALSE
                               USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -744,7 +747,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
              // Barrier imbalance - write min of the thread time and a child time to the thread.
              if (__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
-@@ -698,6 +705,7 @@ __kmp_tree_barrier_gather(enum barrier_t
+@@ -698,6 +705,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
          // Mark arrival to parent thread
          /* After performing this write, a worker thread may not assume that the team is valid
             any more - it could be deallocated by the master thread at any time.  */
@@ -752,7 +755,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
          __kmp_release(other_threads[parent_tid], (kmp_uint32 *)&thr_bar->b_arrived);
      } else {
          // Need to update the team arrived pointer if we are the master thread
-@@ -734,6 +742,7 @@ __kmp_tree_barrier_release(enum barrier_
+@@ -734,6 +742,7 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
          // Wait for parent thread to release us
          __kmp_wait_sleep_64(this_thr, &thr_bar->b_go, KMP_BARRIER_STATE_BUMP, TRUE
                           USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -760,7 +763,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
          if ((__itt_sync_create_ptr && itt_sync_obj == NULL) || KMP_ITT_DEBUG) {
-@@ -802,6 +811,7 @@ __kmp_tree_barrier_release(enum barrier_
+@@ -802,6 +811,7 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                            child_tid, &child_bar->b_go, child_bar->b_go,
                            child_bar->b_go + KMP_BARRIER_STATE_BUMP));
              // Release child from barrier
@@ -768,7 +771,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
              __kmp_release(child_thr, (kmp_uint32 *)&child_bar->b_go);
              child++;
              child_tid++;
-@@ -860,6 +870,7 @@ __kmp_hyper_barrier_gather(enum barrier_
+@@ -860,6 +870,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
              /* After performing this write (in the last iteration of the enclosing for loop),
                 a worker thread may not assume that the team is valid any more - it could be
                 deallocated by the master thread at any time.  */
@@ -776,7 +779,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
              __kmp_release(other_threads[parent_tid], (kmp_uint32 *)&thr_bar->b_arrived);
              break;
          }
-@@ -885,6 +896,7 @@ __kmp_hyper_barrier_gather(enum barrier_
+@@ -885,6 +896,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
              // Wait for child to arrive
              __kmp_wait_sleep_64(this_thr, &child_bar->b_arrived, new_state, FALSE
                               USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -784,7 +787,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
              // Barrier imbalance - write min of the thread time and a child time to the thread.
              if (__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
-@@ -954,6 +966,7 @@ __kmp_hyper_barrier_release(enum barrier
+@@ -954,6 +966,7 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
          // Wait for parent thread to release us
          __kmp_wait_sleep_64(this_thr, &thr_bar->b_go, KMP_BARRIER_STATE_BUMP, TRUE
                           USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -792,7 +795,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
  
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
          if ((__itt_sync_create_ptr && itt_sync_obj == NULL) || KMP_ITT_DEBUG) {
-@@ -1042,6 +1055,7 @@ __kmp_hyper_barrier_release(enum barrier
+@@ -1042,6 +1055,7 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
                                child_tid, &child_bar->b_go, child_bar->b_go,
                                child_bar->b_go + KMP_BARRIER_STATE_BUMP));
                  // Release child from barrier
@@ -800,7 +803,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                  __kmp_release(child_thr, (kmp_uint32 *)&child_bar->b_go);
              }
          }
-@@ -1155,9 +1169,17 @@ __kmp_hierarchical_barrier_gather(enum b
+@@ -1155,9 +1169,17 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                          KA_TRACE(100, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) += T#%d(%d:%d)\n",
                                         gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
                                         team->t.t_id, child_tid));
@@ -818,7 +821,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                  (void) KMP_TEST_THEN_AND64((volatile kmp_int64 *)&thr_bar->b_arrived, ~(thr_bar->leaf_state)); // clear leaf_state bits
              }
              // Next, wait for higher level children on each child's b_arrived flag
-@@ -1173,6 +1195,7 @@ __kmp_hierarchical_barrier_gather(enum b
+@@ -1173,6 +1195,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                                    team->t.t_id, child_tid, &child_bar->b_arrived, new_state));
                      __kmp_wait_sleep_64(this_thr, &child_bar->b_arrived, new_state, FALSE
                                          USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -826,7 +829,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                      if (reduce) {
                          KA_TRACE(100, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) += T#%d(%d:%d)\n",
                                         gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
-@@ -1195,6 +1218,7 @@ __kmp_hierarchical_barrier_gather(enum b
+@@ -1195,6 +1218,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                                    team->t.t_id, child_tid, &child_bar->b_arrived, new_state));
                      __kmp_wait_sleep_64(this_thr, &child_bar->b_arrived, new_state, FALSE
                                          USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -834,7 +837,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                      if (reduce) {
                          KA_TRACE(100, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) += T#%d(%d:%d)\n",
                                         gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
-@@ -1216,6 +1240,7 @@ __kmp_hierarchical_barrier_gather(enum b
+@@ -1216,6 +1240,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
             the team is valid any more - it could be deallocated by the master thread at any time. */
          if (thr_bar->my_level || __kmp_dflt_blocktime != KMP_MAX_BLOCKTIME
              || !thr_bar->use_oncore_barrier) { // Parent is waiting on my b_arrived flag; release it
@@ -842,7 +845,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
              __kmp_release(other_threads[thr_bar->parent_tid], (kmp_uint32 *)&thr_bar->b_arrived);
          }
          else { // Leaf does special release on the "offset" bits of parent's b_arrived flag
-@@ -1257,6 +1282,7 @@ __kmp_hierarchical_barrier_release(enum 
+@@ -1257,6 +1282,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
              thr_bar->wait_flag = KMP_BARRIER_OWN_FLAG;
              __kmp_wait_sleep_64(this_thr, &thr_bar->b_go, KMP_BARRIER_STATE_BUMP, TRUE
                               USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -850,7 +853,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
              TCW_8(thr_bar->b_go, KMP_INIT_BARRIER_STATE); // Reset my b_go flag for next time
          }
          else { // Thread barrier data is initialized, this is a leaf, blocktime is infinite, not nested
-@@ -1361,6 +1387,7 @@ __kmp_hierarchical_barrier_release(enum 
+@@ -1361,6 +1387,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
                                        team->t.t_id, child_tid, &child_bar->b_go, child_bar->b_go,
                                        child_bar->b_go + KMP_BARRIER_STATE_BUMP));
                          // Release child using child's b_go flag
@@ -858,7 +861,7 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                          __kmp_release(child_thr, (kmp_uint32 *)&child_bar->b_go);
                      }
                  }
-@@ -1383,6 +1410,7 @@ __kmp_hierarchical_barrier_release(enum 
+@@ -1383,6 +1410,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
                                    team->t.t_id, child_tid, &child_bar->b_go, child_bar->b_go,
                                    child_bar->b_go + KMP_BARRIER_STATE_BUMP));
                      // Release child using child's b_go flag
@@ -866,9 +869,10 @@ diff -rupN libomp_oss/src/kmp_barrier.cpp libomp_oss/src/kmp_barrier.cpp
                      __kmp_release(child_thr, (kmp_uint32 *)&child_bar->b_go);
                  }
              }
-diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
---- libomp_oss/src/kmp_lock.cpp	2014-07-16 05:09:35.000000000 -0700
-+++ libomp_oss/src/kmp_lock.cpp	2014-09-24 16:59:33.848336000 -0700
+diff --git a/src/kmp_lock.cpp b/src/kmp_lock.cpp
+index 8410068..634224e 100644
+--- a/src/kmp_lock.cpp
++++ b/src/kmp_lock.cpp
 @@ -42,6 +42,8 @@
  #include "kmp_lock.h"
  #include "kmp_io.h"
@@ -882,11 +886,11 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  __kmp_acquire_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
  {
      __kmp_acquire_tas_lock_timed_template( lck, gtid );
-+        ANNOTATE_TAS_ACQUIRED(lck);
++    ANNOTATE_TAS_ACQUIRED(lck);
  }
  
  static void
-@@ -221,6 +224,7 @@ __kmp_release_tas_lock( kmp_tas_lock_t *
+@@ -221,6 +224,7 @@ __kmp_release_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
      KMP_MB();       /* Flush all pending memory write invalidates.  */
  
      KMP_FSYNC_RELEASING(lck);
@@ -894,7 +898,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
      KMP_ST_REL32( &(lck->lk.poll), 0 );
  
      KMP_MB();       /* Flush all pending memory write invalidates.  */
-@@ -295,6 +299,7 @@ __kmp_acquire_nested_tas_lock( kmp_tas_l
+@@ -295,6 +299,7 @@ __kmp_acquire_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_tas_lock_timed_template( lck, gtid );
@@ -910,7 +914,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  }
  
  static void
-@@ -550,6 +556,7 @@ __kmp_release_futex_lock( kmp_futex_lock
+@@ -550,6 +556,7 @@ __kmp_release_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
        lck, lck->lk.poll, gtid ) );
  
      KMP_FSYNC_RELEASING(lck);
@@ -918,7 +922,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  
      kmp_int32 poll_val = KMP_XCHG_FIXED32( & ( lck->lk.poll ), 0 );
  
-@@ -637,6 +644,7 @@ __kmp_acquire_nested_futex_lock( kmp_fut
+@@ -637,6 +644,7 @@ __kmp_acquire_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_futex_lock_timed_template( lck, gtid );
@@ -934,7 +938,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  }
  
  static void
-@@ -863,6 +872,7 @@ __kmp_release_ticket_lock( kmp_ticket_lo
+@@ -863,6 +872,7 @@ __kmp_release_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
      KMP_MB();       /* Flush all pending memory write invalidates.  */
  
      KMP_FSYNC_RELEASING(lck);
@@ -942,7 +946,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
      distance = ( TCR_4( lck->lk.next_ticket ) - TCR_4( lck->lk.now_serving ) );
  
      KMP_ST_REL32( &(lck->lk.now_serving), lck->lk.now_serving + 1 );
-@@ -954,6 +964,7 @@ __kmp_acquire_nested_ticket_lock( kmp_ti
+@@ -954,6 +964,7 @@ __kmp_acquire_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_ticket_lock_timed_template( lck, gtid );
@@ -950,7 +954,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
          KMP_MB();
          lck->lk.depth_locked = 1;
          KMP_MB();
-@@ -1406,6 +1417,7 @@ __kmp_acquire_queuing_lock( kmp_queuing_
+@@ -1406,6 +1417,7 @@ __kmp_acquire_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
      KMP_DEBUG_ASSERT( gtid >= 0 );
  
      __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
@@ -958,7 +962,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  }
  
  static void
-@@ -1454,6 +1466,7 @@ __kmp_test_queuing_lock( kmp_queuing_loc
+@@ -1454,6 +1466,7 @@ __kmp_test_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
          if ( KMP_COMPARE_AND_STORE_ACQ32( head_id_p, 0, -1 ) ) {
              KA_TRACE( 1000, ("__kmp_test_queuing_lock: T#%d exiting: holding lock\n", gtid ));
              KMP_FSYNC_ACQUIRED(lck);
@@ -966,7 +970,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
              return TRUE;
          }
      }
-@@ -1504,6 +1517,7 @@ __kmp_release_queuing_lock( kmp_queuing_
+@@ -1504,6 +1517,7 @@ __kmp_release_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
      KMP_DEBUG_ASSERT( this_thr->th.th_next_waiting == 0 );
  
      KMP_FSYNC_RELEASING(lck);
@@ -974,15 +978,15 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  
      while( 1 ) {
          kmp_int32 dequeued;
-@@ -1701,6 +1715,7 @@ __kmp_acquire_nested_queuing_lock( kmp_q
+@@ -1701,6 +1715,7 @@ __kmp_acquire_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
-+         ANNOTATE_QUEUING_ACQUIRED(lck);
++	ANNOTATE_QUEUING_ACQUIRED(lck);
          KMP_MB();
          lck->lk.depth_locked = 1;
          KMP_MB();
-@@ -2340,6 +2355,7 @@ __kmp_acquire_adaptive_lock( kmp_adaptiv
+@@ -2340,6 +2355,7 @@ __kmp_acquire_adaptive_lock( kmp_adaptive_lock_t * lck, kmp_int32 gtid )
      __kmp_acquire_queuing_lock_timed_template<FALSE>( GET_QLK_PTR(lck), gtid );
      // We have acquired the base lock, so count that.
      KMP_INC_STAT(lck,nonSpeculativeAcquires );
@@ -998,7 +1002,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  }
  
  static void
-@@ -2720,6 +2737,7 @@ __kmp_release_drdpa_lock( kmp_drdpa_lock
+@@ -2720,6 +2737,7 @@ __kmp_release_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
      KA_TRACE(1000, ("__kmp_release_drdpa_lock: ticket #%lld released lock %p\n",
         ticket - 1, lck));
      KMP_FSYNC_RELEASING(lck);
@@ -1006,7 +1010,7 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
      KMP_ST_REL64(&(polls[ticket & mask].poll), ticket); // volatile store
  }
  
-@@ -2823,6 +2841,7 @@ __kmp_acquire_nested_drdpa_lock( kmp_drd
+@@ -2823,6 +2841,7 @@ __kmp_acquire_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_drdpa_lock_timed_template( lck, gtid );
@@ -1014,12 +1018,12 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
          KMP_MB();
          lck->lk.depth_locked = 1;
          KMP_MB();
-@@ -3364,12 +3383,15 @@ __kmp_user_lock_allocate( void **user_lo
+@@ -3364,12 +3383,15 @@ __kmp_user_lock_allocate( void **user_lock, kmp_int32 gtid,
  
      if ( __kmp_lock_pool == NULL ) {
          // Lock pool is empty. Allocate new memory.
 +        /* ANNOTATION: Found no good way to express the syncronisation between allocation and usage, so ignore the allocation */
-+        ANNOTATE_IGNORE_WRITES_BEGIN(); 
++        ANNOTATE_IGNORE_WRITES_BEGIN();
          if ( __kmp_num_locks_in_block <= 1 ) { // Tune this cutoff point.
              lck = (kmp_user_lock_p) __kmp_allocate( __kmp_user_lock_size );
          }
@@ -1030,9 +1034,10 @@ diff -rupN libomp_oss/src/kmp_lock.cpp libomp_oss/src/kmp_lock.cpp
  
          // Insert lock in the table so that it can be freed in __kmp_cleanup,
          // and debugger has info on all allocated locks.
-diff -rupN libomp_oss/src/kmp_runtime.c libomp_oss/src/kmp_runtime.c
---- libomp_oss/src/kmp_runtime.c	2014-07-16 05:09:35.000000000 -0700
-+++ libomp_oss/src/kmp_runtime.c	2014-09-24 17:52:04.176955000 -0700
+diff --git a/src/kmp_runtime.c b/src/kmp_runtime.c
+index 4e18cca..61db737 100644
+--- a/src/kmp_runtime.c
++++ b/src/kmp_runtime.c
 @@ -54,6 +54,7 @@
  #include <process.h>
  #endif
@@ -1049,9 +1054,10 @@ diff -rupN libomp_oss/src/kmp_runtime.c libomp_oss/src/kmp_runtime.c
              __kmp_release(thread, (kmp_uint32 *)&thread->th.th_bar[ bs_forkjoin_barrier ].bb.b_go);
          }; // if
  
-diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
---- libomp_oss/src/kmp_tasking.c	2014-07-16 05:09:36.000000000 -0700
-+++ libomp_oss/src/kmp_tasking.c	2014-09-24 16:59:33.871318000 -0700
+diff --git a/src/kmp_tasking.c b/src/kmp_tasking.c
+index 748c34e..eb9e61c 100644
+--- a/src/kmp_tasking.c
++++ b/src/kmp_tasking.c
 @@ -38,6 +38,7 @@
  #include "kmp_i18n.h"
  #include "kmp_itt.h"
@@ -1060,7 +1066,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
  
  
  /* ------------------------------------------------------------------------ */
-@@ -537,6 +538,7 @@ __kmp_free_task( kmp_int32 gtid, kmp_tas
+@@ -537,6 +538,7 @@ __kmp_free_task( kmp_int32 gtid, kmp_taskdata_t * taskdata, kmp_info_t * thread
      KMP_DEBUG_ASSERT( TCR_4(taskdata->td_incomplete_child_tasks) == 0 );
  
      taskdata->td_flags.freed = 1;
@@ -1068,17 +1074,15 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      // deallocate the taskdata and shared variable blocks associated with this task
      #if USE_FAST_MEMORY
          __kmp_fast_free( thread, taskdata );
-@@ -863,7 +865,8 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_
+@@ -863,6 +865,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
      #else /* ! USE_FAST_MEMORY */
      taskdata = (kmp_taskdata_t *) __kmp_thread_malloc( thread, shareds_offset + sizeof_shareds );
      #endif /* USE_FAST_MEMORY */
--
 +    ANNOTATE_HAPPENS_AFTER(taskdata);
-+    
+ 
      task                      = KMP_TASKDATA_TO_TASK(taskdata);
  
-     // Make sure task & taskdata are aligned appropriately
-@@ -947,6 +950,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_
+@@ -947,6 +950,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
      KA_TRACE(20, ("__kmp_task_alloc(exit): T#%d created task %p parent=%p\n",
                    gtid, taskdata, taskdata->td_parent) );
  
@@ -1086,7 +1090,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      return task;
  }
  
-@@ -992,6 +996,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_t
+@@ -992,6 +996,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
      KA_TRACE(30, ("__kmp_invoke_task(enter): T#%d invoking task %p, current_task=%p\n",
                    gtid, taskdata, current_task) );
  
@@ -1094,7 +1098,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      __kmp_task_start( gtid, task, current_task );
  
  #if OMP_40_ENABLED
-@@ -1027,6 +1032,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_t
+@@ -1027,6 +1032,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
      }
  #endif // OMP_40_ENABLED
  
@@ -1102,7 +1106,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      __kmp_task_finish( gtid, task, current_task );
  
      KA_TRACE(30, ("__kmp_inovke_task(exit): T#%d completed task %p, resuming task %p\n",
-@@ -1066,6 +1072,7 @@ __kmpc_omp_task_parts( ident_t *loc_ref,
+@@ -1066,6 +1072,7 @@ __kmpc_omp_task_parts( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task)
                    "loc=%p task=%p, return: TASK_CURRENT_NOT_QUEUED\n", gtid, loc_ref,
                    new_taskdata ) );
  
@@ -1110,7 +1114,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      return TASK_CURRENT_NOT_QUEUED;
  }
  
-@@ -1095,6 +1102,7 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task
+@@ -1095,6 +1102,7 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate
      }
  
  
@@ -1118,7 +1122,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      return TASK_CURRENT_NOT_QUEUED;
  }
  
-@@ -1177,6 +1185,7 @@ __kmpc_omp_taskwait( ident_t *loc_ref, k
+@@ -1177,6 +1185,7 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
      KA_TRACE(10, ("__kmpc_omp_taskwait(exit): T#%d task %p finished waiting, "
                    "returning TASK_CURRENT_NOT_QUEUED\n", gtid, taskdata) );
  
@@ -1126,7 +1130,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
      return TASK_CURRENT_NOT_QUEUED;
  }
  
-@@ -1302,6 +1311,7 @@ __kmpc_end_taskgroup( ident_t* loc, int 
+@@ -1302,6 +1311,7 @@ __kmpc_end_taskgroup( ident_t* loc, int gtid )
      __kmp_thread_free( thread, taskgroup );
  
      KA_TRACE(10, ("__kmpc_end_taskgroup(exit): T#%d task %p finished waiting\n", gtid, taskdata) );
@@ -1134,7 +1138,7 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
  }
  #endif
  
-@@ -2064,8 +2074,10 @@ __kmp_realloc_task_threads_data( kmp_inf
+@@ -2064,8 +2074,10 @@ __kmp_realloc_task_threads_data( kmp_info_t *thread, kmp_task_team_t *task_team
                  // Make the initial allocate for threads_data array, and zero entries
                  // Cannot use __kmp_thread_calloc() because threads not around for
                  // kmp_reap_task_team( ).
@@ -1145,9 +1149,10 @@ diff -rupN libomp_oss/src/kmp_tasking.c libomp_oss/src/kmp_tasking.c
  #ifdef BUILD_TIED_TASK_STACK
                  // GEH: Figure out if this is the right thing to do
                  for (i = 0; i < nthreads; i++) {
-diff -rupN libomp_oss/src/makefile.mk libomp_oss/src/makefile.mk
---- libomp_oss/src/makefile.mk	2014-07-16 05:09:36.000000000 -0700
-+++ libomp_oss/src/makefile.mk	2014-09-24 18:05:35.068908000 -0700
+diff --git a/src/makefile.mk b/src/makefile.mk
+index 4d39707..aad6330 100644
+--- a/src/makefile.mk
++++ b/src/makefile.mk
 @@ -116,6 +116,7 @@ define curr_config
      CXXFLAGS=$(subst $(space),_,$(CXXFLAGS))
      FFLAGS=$(subst $(space),_,$(FFLAGS))
@@ -1195,9 +1200,10 @@ diff -rupN libomp_oss/src/makefile.mk libomp_oss/src/makefile.mk
          endif
          tt-c-flags += -o $(tt-exe-file)
          ifneq "$(filter 32 32e 64,$(arch))" ""
-diff -rupN libomp_oss/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
---- libomp_oss/src/z_Linux_util.c	2014-07-16 05:09:36.000000000 -0700
-+++ libomp_oss/src/z_Linux_util.c	2014-09-24 17:55:41.529987000 -0700
+diff --git a/src/z_Linux_util.c b/src/z_Linux_util.c
+index dfb1492..2719274 100644
+--- a/src/z_Linux_util.c
++++ b/src/z_Linux_util.c
 @@ -52,6 +52,8 @@
  #include <sys/resource.h>
  #include <sys/syscall.h>
@@ -1207,15 +1213,7 @@ diff -rupN libomp_oss/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
  #if KMP_OS_LINUX
  # include <sys/sysinfo.h>
  # if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
-@@ -1326,7 +1328,6 @@ __kmp_reap_worker( kmp_info_t *th )
-     KMP_MB();       /* Flush all pending memory write invalidates.  */
- 
-     KA_TRACE( 10, ("__kmp_reap_worker: try to reap T#%d\n", th->th.th_info.ds.ds_gtid ) );
--
-     /* First, check to see whether the worker thread exists.  This could prevent a hang,
-        but if the worker dies after the pthread_kill call and before the pthread_join
-        call, it will still hang. */
-@@ -1639,6 +1640,7 @@ __kmp_suspend_initialize( void )
+@@ -1639,6 +1641,7 @@ __kmp_suspend_initialize( void )
  static void
  __kmp_suspend_initialize_thread( kmp_info_t *th )
  {
@@ -1223,7 +1221,7 @@ diff -rupN libomp_oss/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
      if ( th->th.th_suspend_init_count <= __kmp_fork_count ) {
          /* this means we haven't initialized the suspension pthread objects for this thread
             in this instance of the process */
-@@ -1648,6 +1650,7 @@ __kmp_suspend_initialize_thread( kmp_inf
+@@ -1648,6 +1651,7 @@ __kmp_suspend_initialize_thread( kmp_info_t *th )
          status = pthread_mutex_init( &th->th.th_suspend_mx.m_mutex, & __kmp_suspend_mutex_attr );
          KMP_CHECK_SYSFAIL( "pthread_mutex_init", status );
          *(volatile int*)&th->th.th_suspend_init_count = __kmp_fork_count + 1;
@@ -1231,9 +1229,10 @@ diff -rupN libomp_oss/src/z_Linux_util.c libomp_oss/src/z_Linux_util.c
      };
  }
  
-diff -rupN libomp_oss/tools/build.pl libomp_oss/tools/build.pl
---- libomp_oss/tools/build.pl	2014-07-16 05:09:38.000000000 -0700
-+++ libomp_oss/tools/build.pl	2014-09-25 08:48:17.137542000 -0700
+diff --git a/tools/build.pl b/tools/build.pl
+index e16c4f3..7ab619c 100755
+--- a/tools/build.pl
++++ b/tools/build.pl
 @@ -88,12 +88,13 @@ my $opts = {
      "mic-arch"        => { targets => "rtl",               base => 0, parms => { knf     => "*", knc       => "", knl => ""   }, suffix => sub { $_[ 0 ];                       } },
      "mic-os"          => { targets => "rtl",               base => 0, parms => { bsd     => "*", lin       => ""              }, suffix => sub { $_[ 0 ];                       } },

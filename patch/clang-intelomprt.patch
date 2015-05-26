@@ -1,32 +1,28 @@
 diff --git a/lib/Driver/Tools.cpp b/lib/Driver/Tools.cpp
-index 69b37ae..a8c2c0a 100644
+index 01d6844..658e7ac 100644
 --- a/lib/Driver/Tools.cpp
 +++ b/lib/Driver/Tools.cpp
-@@ -5742,8 +5742,17 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
+@@ -5926,8 +5926,14 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
    Args.AddAllArgs(CmdArgs, options::OPT_L);
  
-   if (Args.hasArg(options::OPT_fopenmp))
-+  {
-+    const toolchains::Linux& ToolChain =
-+      static_cast<const toolchains::Linux&>(getToolChain());
+   if (Args.hasArg(options::OPT_fopenmp)){
++    const toolchains::Linux& ToolChain = static_cast<const toolchains::Linux&>(getToolChain());
 +    const SanitizerArgs &Sanitize = ToolChain.getSanitizerArgs();
-+                
++
      // This is more complicated in gcc...
 -    CmdArgs.push_back("-liomp5");
-+        if(Sanitize.needsTsanRt())
-+                  CmdArgs.push_back("-liomp5_tsan");
-+        else
-+                  CmdArgs.push_back("-liomp5");
-+  }
++    if(Sanitize.needsTsanRt())
++      CmdArgs.push_back("-liomp5_tsan");
++    else
++      CmdArgs.push_back("-liomp5");
  
-   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
-   
-@@ -7455,12 +7464,18 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
+     if (Args.hasArg(options::OPT_omptargets_EQ))
+       CmdArgs.push_back("-lomptarget");
+@@ -7668,12 +7674,18 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
  
    if (!Args.hasArg(options::OPT_nostdlib)) {
      if (!Args.hasArg(options::OPT_nodefaultlibs)) {
-+      const toolchains::Linux& ToolChain =
-+        static_cast<const toolchains::Linux&>(getToolChain());
++      const toolchains::Linux& ToolChain = static_cast<const toolchains::Linux&>(getToolChain());s
 +      const SanitizerArgs &Sanitize = ToolChain.getSanitizerArgs();
        if (Args.hasArg(options::OPT_static))
          CmdArgs.push_back("--start-group");
@@ -38,6 +34,7 @@ index 69b37ae..a8c2c0a 100644
 +	  CmdArgs.push_back("-liomp5_tsan");
 +	else
 +	  CmdArgs.push_back("-liomp5");
++
+         if (Args.hasArg(options::OPT_omptargets_EQ))
+           CmdArgs.push_back("-lomptarget");
        }
-       AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
- 
