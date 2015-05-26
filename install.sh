@@ -40,7 +40,7 @@ do
 done
 
 echo
-echoc "LLVM will be installed under [${LLVM_INSTALL}]"
+echoc "LLVM will be installed at [${LLVM_INSTALL}]"
 
 # Get the number of cores to speed up make process
 if [ "$(uname)" == "Darwin" ]; then
