@@ -190,7 +190,7 @@ cd ${LLVMRT_SRC}
 patch -p 1 < ${WORKING_DIR}/patch/compiler-rt-intelomprt.patch
 cd ${INTELOMPRT}
 tar xzvf ${INTELOMPRT_FILE}
-patch -p 0 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
+patch -p 1 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
 
 # Compiling and installing Cloog (dependency for Polly)
 echo

@@ -1,7 +1,7 @@
-diff --git a/Makefile b/Makefile
+diff --git a/libomp_oss/Makefile b/libomp_oss/Makefile
 index 40e0327..e6cd784 100644
---- a/Makefile
-+++ b/Makefile
+--- a/libomp_oss/Makefile
++++ b/libomp_oss/Makefile
 @@ -29,6 +29,8 @@
  # </copyright>
  
@@ -28,10 +28,10 @@ index 40e0327..e6cd784 100644
  
  .PHONY: clean info
  
-diff --git a/src/dynamic_annotations.h b/src/dynamic_annotations.h
+diff --git a/libomp_oss/src/dynamic_annotations.h b/libomp_oss/src/dynamic_annotations.h
 index e69de29..e595d74 100644
---- a/src/dynamic_annotations.h
-+++ b/src/dynamic_annotations.h
+--- a/libomp_oss/src/dynamic_annotations.h
++++ b/libomp_oss/src/dynamic_annotations.h
 @@ -0,0 +1,661 @@
 +/* Copyright (c) 2011, Google Inc.
 +* All rights reserved.
@@ -694,10 +694,10 @@ index e69de29..e595d74 100644
 +#endif /* DYNAMIC_ANNOTATIONS_ENABLED */
 +
 +#endif /* __DYNAMIC_ANNOTATIONS_H__ */
-diff --git a/src/kmp_barrier.cpp b/src/kmp_barrier.cpp
+diff --git a/libomp_oss/src/kmp_barrier.cpp b/libomp_oss/src/kmp_barrier.cpp
 index ac6f459..47600d8 100644
---- a/src/kmp_barrier.cpp
-+++ b/src/kmp_barrier.cpp
+--- a/libomp_oss/src/kmp_barrier.cpp
++++ b/libomp_oss/src/kmp_barrier.cpp
 @@ -56,6 +56,8 @@
  #define ngo_sync()               ((void)0)
  #endif /* KMP_MIC && USE_NGO_STORES */
@@ -869,10 +869,10 @@ index ac6f459..47600d8 100644
                      __kmp_release(child_thr, (kmp_uint32 *)&child_bar->b_go);
                  }
              }
-diff --git a/src/kmp_lock.cpp b/src/kmp_lock.cpp
+diff --git a/libomp_oss/src/kmp_lock.cpp b/libomp_oss/src/kmp_lock.cpp
 index 8410068..634224e 100644
---- a/src/kmp_lock.cpp
-+++ b/src/kmp_lock.cpp
+--- a/libomp_oss/src/kmp_lock.cpp
++++ b/libomp_oss/src/kmp_lock.cpp
 @@ -42,6 +42,8 @@
  #include "kmp_lock.h"
  #include "kmp_io.h"
@@ -1034,10 +1034,10 @@ index 8410068..634224e 100644
  
          // Insert lock in the table so that it can be freed in __kmp_cleanup,
          // and debugger has info on all allocated locks.
-diff --git a/src/kmp_runtime.c b/src/kmp_runtime.c
+diff --git a/libomp_oss/src/kmp_runtime.c b/libomp_oss/src/kmp_runtime.c
 index 4e18cca..61db737 100644
---- a/src/kmp_runtime.c
-+++ b/src/kmp_runtime.c
+--- a/libomp_oss/src/kmp_runtime.c
++++ b/libomp_oss/src/kmp_runtime.c
 @@ -54,6 +54,7 @@
  #include <process.h>
  #endif
@@ -1054,10 +1054,10 @@ index 4e18cca..61db737 100644
              __kmp_release(thread, (kmp_uint32 *)&thread->th.th_bar[ bs_forkjoin_barrier ].bb.b_go);
          }; // if
  
-diff --git a/src/kmp_tasking.c b/src/kmp_tasking.c
+diff --git a/libomp_oss/src/kmp_tasking.c b/libomp_oss/src/kmp_tasking.c
 index 748c34e..eb9e61c 100644
---- a/src/kmp_tasking.c
-+++ b/src/kmp_tasking.c
+--- a/libomp_oss/src/kmp_tasking.c
++++ b/libomp_oss/src/kmp_tasking.c
 @@ -38,6 +38,7 @@
  #include "kmp_i18n.h"
  #include "kmp_itt.h"
@@ -1149,10 +1149,10 @@ index 748c34e..eb9e61c 100644
  #ifdef BUILD_TIED_TASK_STACK
                  // GEH: Figure out if this is the right thing to do
                  for (i = 0; i < nthreads; i++) {
-diff --git a/src/makefile.mk b/src/makefile.mk
+diff --git a/libomp_oss/src/makefile.mk b/libomp_oss/src/makefile.mk
 index 4d39707..aad6330 100644
---- a/src/makefile.mk
-+++ b/src/makefile.mk
+--- a/libomp_oss/src/makefile.mk
++++ b/libomp_oss/src/makefile.mk
 @@ -116,6 +116,7 @@ define curr_config
      CXXFLAGS=$(subst $(space),_,$(CXXFLAGS))
      FFLAGS=$(subst $(space),_,$(FFLAGS))
@@ -1200,10 +1200,10 @@ index 4d39707..aad6330 100644
          endif
          tt-c-flags += -o $(tt-exe-file)
          ifneq "$(filter 32 32e 64,$(arch))" ""
-diff --git a/src/z_Linux_util.c b/src/z_Linux_util.c
+diff --git a/libomp_oss/src/z_Linux_util.c b/libomp_oss/src/z_Linux_util.c
 index dfb1492..2719274 100644
---- a/src/z_Linux_util.c
-+++ b/src/z_Linux_util.c
+--- a/libomp_oss/src/z_Linux_util.c
++++ b/libomp_oss/src/z_Linux_util.c
 @@ -52,6 +52,8 @@
  #include <sys/resource.h>
  #include <sys/syscall.h>
@@ -1229,10 +1229,10 @@ index dfb1492..2719274 100644
      };
  }
  
-diff --git a/tools/build.pl b/tools/build.pl
+diff --git a/libomp_oss/tools/build.pl b/libomp_oss/tools/build.pl
 index e16c4f3..7ab619c 100755
---- a/tools/build.pl
-+++ b/tools/build.pl
+--- a/libomp_oss/tools/build.pl
++++ b/libomp_oss/tools/build.pl
 @@ -88,12 +88,13 @@ my $opts = {
      "mic-arch"        => { targets => "rtl",               base => 0, parms => { knf     => "*", knc       => "", knl => ""   }, suffix => sub { $_[ 0 ];                       } },
      "mic-os"          => { targets => "rtl",               base => 0, parms => { bsd     => "*", lin       => ""              }, suffix => sub { $_[ 0 ];                       } },
