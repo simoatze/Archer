@@ -137,7 +137,7 @@ git reset --hard ${LLVM_COMMIT}
 # Clang Sources
 echo
 echoc "Obtaining LLVM/Clang OpenMP..."
-git clone ${CLANG_REPO} ${LLVM_SRC}
+git clone ${CLANG_REPO} ${CLANG_SRC}
 cd ${CLANG_SRC}
 git reset --hard ${CLANG_COMMIT}
 
