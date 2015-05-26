@@ -22,7 +22,7 @@ index 40bb160..da8c555 100644
  
    if (!Args.hasArg(options::OPT_nostdlib)) {
      if (!Args.hasArg(options::OPT_nodefaultlibs)) {
-+      const toolchains::Linux& ToolChain = static_cast<const toolchains::Linux&>(getToolChain());s
++      const toolchains::Linux& ToolChain = static_cast<const toolchains::Linux&>(getToolChain());
 +      const SanitizerArgs &Sanitize = ToolChain.getSanitizerArgs();
        if (Args.hasArg(options::OPT_static))
          CmdArgs.push_back("--start-group");
