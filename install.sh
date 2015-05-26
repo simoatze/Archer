@@ -123,7 +123,7 @@ mkdir -p ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
 CLOOG_INSTALL=${LLVM_DEP}/cloog_install
 INTELOMPRT_VERSION=20140716
-INTELOMPRT_FILE=https://www.openmprtl.org/sites/default/files/libomp_${INTELOMPRT_VERSION}_oss.tgz
+INTELOMPRT_FILE=libomp_${INTELOMPRT_VERSION}_oss.tgz
 
 # Obtaining the sources
 
@@ -159,7 +159,7 @@ git reset --hard ${POLLY_COMMIT}
 mkdir ${INTELOMPRT}
 echo
 echo "Obtaining Intel OpenMP Runtime..."
-wget --directory-prefix=${INTELOMPRT} ${INTELOMPRT_FILE}
+wget --directory-prefix=${INTELOMPRT} https://www.openmprtl.org/sites/default/files/${INTELOMPRT_FILE}
 
 # Applying the Patch
 
