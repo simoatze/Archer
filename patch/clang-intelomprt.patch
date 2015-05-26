@@ -1,8 +1,8 @@
 diff --git a/lib/Driver/Tools.cpp b/lib/Driver/Tools.cpp
-index 01d6844..658e7ac 100644
+index 40bb160..da8c555 100644
 --- a/lib/Driver/Tools.cpp
 +++ b/lib/Driver/Tools.cpp
-@@ -5926,8 +5926,14 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
+@@ -5910,8 +5910,14 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
    Args.AddAllArgs(CmdArgs, options::OPT_L);
  
    if (Args.hasArg(options::OPT_fopenmp)){
@@ -18,7 +18,7 @@ index 01d6844..658e7ac 100644
  
      if (Args.hasArg(options::OPT_omptargets_EQ))
        CmdArgs.push_back("-lomptarget");
-@@ -7668,12 +7674,18 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
+@@ -7652,12 +7658,18 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
  
    if (!Args.hasArg(options::OPT_nostdlib)) {
      if (!Args.hasArg(options::OPT_nodefaultlibs)) {
