@@ -121,7 +121,8 @@ mkdir -p ${LLVM_BUILD}
 LLVM_DEP=${LLVM_BUILD}/dependencies
 mkdir -p ${LLVM_DEP}
 CLOOG_SRC=${LLVM_DEP}/cloog_src
-CLOOG_INSTALL=${LLVM_DEP}/cloog_install
+# CLOOG_INSTALL=${LLVM_DEP}/cloog_install
+CLOOG_INSTALL=${LLVM_INSTALL}
 INTELOMPRT_VERSION=20140716
 INTELOMPRT_FILE=libomp_${INTELOMPRT_VERSION}_oss.tgz
 
@@ -229,8 +230,10 @@ cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib ${LLVM_INSTALL}/lib/intelompr
 
 # Compiling and installing Archer
 echoc "Building Archer..."
-cd ${WORKING_DIR}
+cd ${WORKING_DIR}/src
+make
 mkdir -p ${ARCHER_INSTALL}
+cd ${WORKING_DIR}
 cp -R ${WORKING_DIR}/bin ${ARCHER_INSTALL}
 cp -R ${WORKING_DIR}/lib ${ARCHER_INSTALL}
 
