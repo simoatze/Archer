@@ -41,6 +41,8 @@ ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
 COMPILE_AND_LINK=False
 KEEP_LOGS=False
+OPT_FLAGS = [ "O0", "O1", "O2", "O3", "Os", "Oz" ]
+OPT_FLAG="-O0"
 
 def cleanLogs():
     file = open(LOGS_LIST, "r")
@@ -121,10 +123,16 @@ def argumentsParser():
     # parser.add_argument('-MPI_LIB', nargs='?', default='', help='Set the path where to find MPI libraries')
     # parser.add_argument('-g', action='store_true')
     parser.add_argument('-g', action='store_true', help='If the debugging flag is not present in the compilation command it will be added by default')
-    parser.add_argument('-O0', '-O1', '-O2', '-O3', '-Os', '-Oz', '--OPTIM', nargs='?', default='O0', help='The optimization flags will be forced to \'-O0\' optimization level for analysis purposes')
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument('-O0', action='store_true', help='The optimization flags will be forced to \'-O0\' optimization level for analysis purposes')
+    action.add_argument('-O1', action='store_true')
+    action.add_argument('-O2', action='store_true')
+    action.add_argument('-O3', action='store_true')
+    action.add_argument('-Os', action='store_true')
+    action.add_argument('-Oz', action='store_true')
     parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
-    parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
-    parser.add_argument('-c', nargs='?', default=None, help='Only run preprocess, compile, and assemble steps')
+    # parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
+    parser.add_argument('-c', action='store_true', help='Only run preprocess, compile, and assemble steps')
     parser.add_argument('-o', nargs='?', default='a.out', help='Output filename')
 
     return parser
@@ -226,11 +234,11 @@ def archerLink(args):
             blCommand += [ item[0], "0" ]
             executeCommand(blCommand, args)
 
-        arg = item[2]
-        clangCommand = [ arg.CC ]
-        clangCommand += [ "-g", "-O0" ]
-        if(arg.fopenmp):
-            clangCommand += [ "-fopenmp" ]
+            arg = item[2]
+            clangCommand = [ arg.CC ]
+            clangCommand += [ "-g", "-O0" ]
+            if(arg.fopenmp):
+                clangCommand += [ "-fopenmp" ]
             lst = item[0].rsplit("/", 1)
             blacklist = lst[0] + "/.archer/blacklists/" + lst[1] + BL_EXT
             clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], "-c", item[0]]
@@ -273,7 +281,7 @@ def archerLink(args):
             clangCommand = [ args.CC ]
         clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
         clangCommand.extend(args.unknown)
-        clangCommand += [ "-liomp5_tsan" ]
+        # clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
     elif COMPILE_AND_LINK:
         os.chdir(current_path)
@@ -285,9 +293,10 @@ def archerLink(args):
         blCommand += [ args.src, "0" ]
         executeCommand(blCommand, args)
         blacklist = current_path + "/.archer/blacklists/" + args.src + BL_EXT
-        clangCommand += [ "-g", "-" + args.OPTIM, "-fopenmp", "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", args.o, args.src ]
+
+        clangCommand += [ "-g", OPT_FLAG, "-fopenmp", "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", args.o, args.src ]
         clangCommand.extend(args.unknown)
-        clangCommand += [ "-liomp5_tsan" ]
+        # clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
     else:
         os.chdir(current_path)
@@ -297,7 +306,7 @@ def archerLink(args):
             clangCommand = [ args.CC ]
         clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
         clangCommand.extend(args.unknown)
-        clangCommand += [ "-liomp5_tsan" ]
+        # clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
 
     if not KEEP_LOGS:
@@ -336,7 +345,7 @@ if __name__ == '__main__':
     KEEP_LOGS = args.log
 
     # find source file .c, .cc, .cpp, .cxx in unknown arguments
-    if args.c is None:
+    if args.c is False:
         for arg in unknown:
             if any(arg.endswith(ext) for ext in SOURCE_EXT):
                 args.__dict__['src'] = arg
@@ -356,7 +365,11 @@ if __name__ == '__main__':
             else:
                 sys.exit("Archer encountered an error when parsing parameters.\nExiting...")
     else:
-        args.__dict__['src'] = args.c
+        for arg in unknown:
+            if any(arg.endswith(ext) for ext in SOURCE_EXT):
+                args.__dict__['src'] = arg
+                unknown.remove(arg)
+                break
         args.__dict__['unknown'] = unknown
 
     # Keep list of compiled file
@@ -372,6 +385,11 @@ if __name__ == '__main__':
 
     # args.OPENMP_INCLUDE = "-I" + args.OPENMP_INCLUDE if (args.OPENMP_INCLUDE is not '') else ''
     # args.MPI_INCLUDE = "-I" + args.MPI_INCLUDE if (args.MPI_INCLUDE is not '') else ''
+
+    # Check optimization flag
+    for arg in OPT_FLAGS:
+        if args.__dict__[arg]:
+            OPT_FLAG = "-" + arg
 
     if COMPILE_AND_LINK:
         print "Compiling and Linking"

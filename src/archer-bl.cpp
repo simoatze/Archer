@@ -108,7 +108,7 @@ int main(int argc, char **argv)
   }
   
   for (std::map<int, std::string>::iterator it = si_info.begin(); it != si_info.end(); ++it)
-    content += "line:" + NumberToString<unsigned>(it->first) + "," + it->second;
+    content += "line:" + NumberToString<unsigned>(it->first) + "," + it->second + "\n";
   
   // Writing final blacklist
   std::string blfilename = filename + BL_LINES;

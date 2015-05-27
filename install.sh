@@ -192,6 +192,8 @@ patch -p 1 < ${WORKING_DIR}/patch/compiler-rt-intelomprt.patch
 cd ${INTELOMPRT}
 tar xzvf ${INTELOMPRT_FILE}
 patch -p 1 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
+mv libomp_oss libomp_oss_patched
+tar xzvf ${INTELOMPRT_FILE}
 
 # Compiling and installing Cloog (dependency for Polly)
 echo
@@ -225,6 +227,13 @@ cd libomp_oss/cmake
 CC=$(which gcc) CXX=$(which g++) cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 make -j${PROCS} -l${PROCS}
 cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib ${LLVM_INSTALL}/lib/intelomprt
+cd ${INTELOMPRT}
+cd libomp_oss_patched/cmake
+CC=$(which gcc) CXX=$(which g++) cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
+make -j${PROCS} -l${PROCS}
+cp -r ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
+cp -r ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
+cp ${INTELOMPRT}/libomp_oss/cmake/omp.h ${LLVM_INSTALL}/include
 # Installing Instrumented Intel OpenMP Runtime (temporary until patch)
 # cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
 
