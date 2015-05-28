@@ -10,7 +10,14 @@
 </li>
 <li><a href="#sec-3">3. Usage</a>
 <ul>
-<li><a href="#sec-3-1">3.1. Archer Options</a></li>
+<li><a href="#sec-3-1">3.1. How to compile</a>
+<ul>
+<li><a href="#sec-3-1-1">3.1.1. Single source</a></li>
+<li><a href="#sec-3-1-2">3.1.2. With Makefile</a></li>
+<li><a href="#sec-3-1-3">3.1.3. Hybrid MPI-OpenMP programs</a></li>
+</ul>
+</li>
+<li><a href="#sec-3-2">3.2. Options</a></li>
 </ul>
 </li>
 <li><a href="#sec-4">4. FAQ</a></li>
@@ -53,7 +60,47 @@ level of Archer.
 
 # Usage<a id="sec-3" name="sec-3"></a>
 
-## Archer Options<a id="sec-3-1" name="sec-3-1"></a>
+## How to compile<a id="sec-3-1" name="sec-3-1"></a>
+
+Archer provides a command to compile your programs with Clang/LLVM
+OpenMP and obtain automatically and in transparent way data race
+detection support for OpenMP programs.
+
+The Archer program is called *clang-archer* and it can be used as a
+normal compiler (i.e. clang, gcc, etc.).
+
+Below different situations how to use *clang-archer* to compiler your
+OpenMP programs.
+
+### Single source<a id="sec-3-1-1" name="sec-3-1-1"></a>
+
+    clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
+
+### With Makefile<a id="sec-3-1-2" name="sec-3-1-2"></a>
+
+In your Makefile set the following variables:
+
+    CC = clang-archer
+    
+    LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
+
+### Hybrid MPI-OpenMP programs<a id="sec-3-1-3" name="sec-3-1-3"></a>
+
+In your Makefile set the following variables:
+
+    CC = mpicc -cc=clang-archer
+    
+    ...
+    
+    LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
+
+## Options<a id="sec-3-2" name="sec-3-2"></a>
+
+Running the following command:
+
+    clang-archer --help
+
+will be shown the options available with Archer/Clang.
 
     usage: clang-archer [-h] [-v] [-d] [--log] [-db] [-CC [CC]] [-USE_MPI]
                         [-MPICC [MPICC]] [-OPT [OPT]] [-LINK [LINK]] [-DIS [DIS]]

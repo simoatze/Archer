@@ -48,7 +48,55 @@ level of Archer.
 
 * Usage
 
-** Archer Options
+** How to compile
+
+Archer provides a command to compile your programs with Clang/LLVM
+OpenMP and obtain automatically and in transparent way data race
+detection support for OpenMP programs.
+
+The Archer program is called /clang-archer/ and it can be used as a
+normal compiler (i.e. clang, gcc, etc.).
+
+Below different situations how to use /clang-archer/ to compiler your
+OpenMP programs.
+
+*** Single source
+
+#+BEGIN_SRC
+clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
+#+END_SRC
+
+*** With Makefile
+
+In your Makefile set the following variables:
+
+#+BEGIN_SRC
+CC = clang-archer
+
+LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
+#+END_SRC
+
+*** Hybrid MPI-OpenMP programs
+
+In your Makefile set the following variables:
+
+#+BEGIN_SRC
+CC = mpicc -cc=clang-archer
+
+...
+
+LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
+#+END_SRC
+
+** Options
+
+Running the following command:
+
+#+BEGIN_SRC
+clang-archer --help
+#+END_SRC
+
+will be shown the options available with Archer/Clang.
 
 #+BEGIN_SRC
 usage: clang-archer [-h] [-v] [-d] [--log] [-db] [-CC [CC]] [-USE_MPI]
