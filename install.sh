@@ -42,6 +42,9 @@ done
 echo
 echoc "LLVM will be installed at [${LLVM_INSTALL}]"
 
+# Saving installation patch
+echo ${LLVM_INSTALL} > .install_path
+
 # Get the number of cores to speed up make process
 if [ "$(uname)" == "Darwin" ]; then
     PROCS=$(sysctl -a | grep machdep.cpu | grep core_count | awk -F " " '{ print $2 }')
@@ -231,9 +234,8 @@ cd ${INTELOMPRT}
 cd libomp_oss_patched/cmake
 CC=$(which gcc) CXX=$(which g++) cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 make -j${PROCS} -l${PROCS}
-cp -r ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
-cp -r ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
-cp ${INTELOMPRT}/libomp_oss/cmake/omp.h ${LLVM_INSTALL}/include
+cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
+cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
 # Installing Instrumented Intel OpenMP Runtime (temporary until patch)
 # cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
 
@@ -245,6 +247,8 @@ mkdir -p ${ARCHER_INSTALL}
 cd ${WORKING_DIR}
 cp -R ${WORKING_DIR}/bin ${ARCHER_INSTALL}
 cp -R ${WORKING_DIR}/lib ${ARCHER_INSTALL}
+mkdir ${ARCHER_INSTALL}/include
+cp ${INTELOMPRT}/libomp_oss/cmake/omp.h ${ARCHER_INSTALL}/include
 
 echo
 echo "In order to use LLVM/Clang, the Intel OpenMP Runtime and Archer"

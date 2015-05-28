@@ -118,7 +118,7 @@ def argumentsParser():
     parser.add_argument('-DIS', nargs='?', default='llvm-dis', help='Change the program used to disassemble the byte code files')
     parser.add_argument('-LIB', nargs='?', default='libArcher.so', help='Set the path where to find Archer libraries')
     parser.add_argument('-PLUGIN_LIB', nargs='?', default='ArcherPlugin.so', help='Set the path where to find Archer Plugin libraries')
-    # parser.add_argument('-OPENMP_INCLUDE', nargs='?', default='', help='Set the path where to find OpenMP headers')
+    parser.add_argument('-OPENMP_INCLUDE', nargs='?', default=os.path.dirname(os.path.realpath(__file__)).rsplit("/", 1)[0] + '/include', help='Set the path where to find OpenMP headers')
     # parser.add_argument('-MPI_INCLUDE', nargs='?', default='', help='Set the path where to find MPI headers')
     # parser.add_argument('-MPI_LIB', nargs='?', default='', help='Set the path where to find MPI libraries')
     # parser.add_argument('-g', action='store_true')
@@ -131,7 +131,7 @@ def argumentsParser():
     action.add_argument('-Os', action='store_true')
     action.add_argument('-Oz', action='store_true')
     parser.add_argument('-fopenmp', action='store_true', help='OpenMP flag')
-    # parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
+    parser.add_argument('-liomp5', action='store_true', help='OpenMP library')
     parser.add_argument('-c', action='store_true', help='Only run preprocess, compile, and assemble steps')
     parser.add_argument('-o', nargs='?', default='a.out', help='Output filename')
 
@@ -145,7 +145,7 @@ def archerBuild(args):
     # Create ByteCode
     # No OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-Qunused-arguments", "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT ]
+    clangCommand += [ "-Qunused-arguments", "-emit-llvm", "-O0", "-g", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + POLLY_BC_EXT, '-I' + args.OPENMP_INCLUDE ]
     clangCommand.extend(args.unknown)
 
     executeCommand(clangCommand, args)
@@ -153,7 +153,7 @@ def archerBuild(args):
 
     # OpenMP Support
     clangCommand = [ args.CC ]
-    clangCommand += [ "-Qunused-arguments", "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + OMP_BC_EXT ]
+    clangCommand += [ "-Qunused-arguments", "-emit-llvm", "-O0", "-g", "-fopenmp", "-c", args.src, "-o", ARCHER_DIR + "/" + args.o + OMP_BC_EXT, '-I' + args.OPENMP_INCLUDE ]
     clangCommand.extend(args.unknown)
     executeCommand(clangCommand, args)
     # OpenMP Support
@@ -178,7 +178,7 @@ def archerBuild(args):
 
     # Clang Plugin to find OpenMP constructs information
     clangCommand = [ args.CC ]
-    clangCommand += [ "-Qunused-arguments", "-O0", "-g", "-fopenmp", "-c", args.src ]
+    clangCommand += [ "-Qunused-arguments", "-O0", "-g", "-fopenmp", "-c", args.src, '-I' + args.OPENMP_INCLUDE ]
     clangCommand.extend(args.unknown)
     # lst = filter(lambda item: any(x in item for x in LOCAL_INCLUDE), args.unknown)
     # if lst:
@@ -241,7 +241,7 @@ def archerLink(args):
                 clangCommand += [ "-fopenmp" ]
             lst = item[0].rsplit("/", 1)
             blacklist = lst[0] + "/.archer/blacklists/" + lst[1] + BL_EXT
-            clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], "-c", item[0]]
+            clangCommand += [ "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", item[1], "-c", item[0], '-I' + args.OPENMP_INCLUDE]
             clangCommand.extend(arg.unknown)
             executeCommand(clangCommand, args)
             objFileList.append(item[1])
@@ -281,7 +281,7 @@ def archerLink(args):
             clangCommand = [ args.CC ]
         clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
         clangCommand.extend(args.unknown)
-        # clangCommand += [ "-liomp5_tsan" ]
+        clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
     elif COMPILE_AND_LINK:
         os.chdir(current_path)
@@ -294,9 +294,9 @@ def archerLink(args):
         executeCommand(blCommand, args)
         blacklist = current_path + "/.archer/blacklists/" + args.src + BL_EXT
 
-        clangCommand += [ "-g", OPT_FLAG, "-fopenmp", "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", args.o, args.src ]
+        clangCommand += [ "-g", OPT_FLAG, "-fopenmp", "-fsanitize=thread", "-fsanitize-blacklist=" + blacklist, "-o", args.o, args.src, '-I' + args.OPENMP_INCLUDE ]
         clangCommand.extend(args.unknown)
-        # clangCommand += [ "-liomp5_tsan" ]
+        clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
     else:
         os.chdir(current_path)
@@ -306,7 +306,7 @@ def archerLink(args):
             clangCommand = [ args.CC ]
         clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
         clangCommand.extend(args.unknown)
-        # clangCommand += [ "-liomp5_tsan" ]
+        clangCommand += [ "-liomp5_tsan" ]
         executeCommand(clangCommand, args)
 
     if not KEEP_LOGS:

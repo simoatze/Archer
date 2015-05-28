@@ -94,7 +94,8 @@ int main(int argc, char **argv)
 	std::string pragma = "line:" + NumberToString<unsigned>(pragma_num) + "," + it->second.substr(pos + 1);
 	if(content.find(pragma) == std::string::npos)
 	  content += pragma + "\n";
-	content += "line:" + it->second + "\n";
+	if(content.find(it->second) == std::string::npos)
+	  content += "line:" + it->second + "\n";
 	ndd_info.erase(it);
 	continue;
       }
@@ -107,9 +108,11 @@ int main(int argc, char **argv)
     }
   }
   
-  for (std::map<int, std::string>::iterator it = si_info.begin(); it != si_info.end(); ++it)
-    content += "line:" + NumberToString<unsigned>(it->first) + "," + it->second + "\n";
-  
+  for (std::map<int, std::string>::iterator it = si_info.begin(); it != si_info.end(); ++it) {
+    if(content.find(it->second) == std::string::npos)
+      content += "line:" + it->second + "\n";
+  }
+
   // Writing final blacklist
   std::string blfilename = filename + BL_LINES;
   std::ofstream blfile(blfilename.c_str(), std::ofstream::out); // | std::ofstream::app
