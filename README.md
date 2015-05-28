@@ -153,4 +153,4 @@ will be shown the options available with Archer/Clang.
 
 <img src="resources/images/uofu_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="UofU Logo" title="University of Utah" align="left" />
 
-<img src="resources/images/llnl_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="LLNL Logo" title="Lawrence Livermore National Laboratory" align="right" />
+<img src="resources/images/llnl_logo.png" hspace="5" vspace="5" height="40%" width="45%" alt="LLNL Logo" title="Lawrence Livermore National Laboratory" align="right" />
