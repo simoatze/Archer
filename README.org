@@ -50,6 +50,7 @@ level of Archer.
 
 ** Archer Options
 
+#+BEGIN_SRC
 usage: clang-archer [-h] [-v] [-d] [--log] [-db] [-CC [CC]] [-USE_MPI]
                     [-MPICC [MPICC]] [-OPT [OPT]] [-LINK [LINK]] [-DIS [DIS]]
                     [-LIB [LIB]] [-PLUGIN_LIB [PLUGIN_LIB]]
@@ -94,6 +95,7 @@ optional arguments:
   -liomp5               OpenMP library
   -c                    Only run preprocess, compile, and assemble steps
   -o [O]                Output filename
+#+END_SRC
 
 * FAQ
 

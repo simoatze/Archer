@@ -55,50 +55,50 @@ level of Archer.
 
 ## Archer Options<a id="sec-3-1" name="sec-3-1"></a>
 
-usage: clang-archer [-h] [-v] [-d] [&#x2013;log] [-db] [-CC [CC]] [-USE<sub>MPI]</sub>
-                    [-MPICC [MPICC]] [-OPT [OPT]] [-LINK [LINK]] [-DIS [DIS]]
-                    [-LIB [LIB]] [-PLUGIN<sub>LIB</sub> [PLUGIN<sub>LIB]]</sub>
-                    [-OPENMP<sub>INCLUDE</sub> [OPENMP<sub>INCLUDE]]</sub> [-g]
-                    [-O0 | -O1 | -O2 | -O3 | -Os | -Oz] [-fopenmp] [-liomp5]
-                    [-c] [-o [O]]
-
-Compile your program with Archer support, a data race detector for OpenMP programs.
-
-optional arguments:
-  -h, &#x2013;help            show this help message and exit
-  -v, &#x2013;version         show program's version number and exit
-  -d, &#x2013;debug           Print the compiling commands
-  &#x2013;log                 Keep intermediate logs
-  -db, &#x2013;disable-blacklisting
-                        Disable static analysis and apply ThreadSanitizer
-                        instrumentation to the entire program
-  -CC [CC]              Change the program used to compile and link the
-                        programs
-  -USE<sub>MPI</sub>              Link against MPI libraries
-  -MPICC [MPICC]        Change the program used to compile and link the MPI
-                        programs
-  -OPT [OPT]            Change the program used to optmize the programs
-  -LINK [LINK]          Change the program used to link the byte code files
-  -DIS [DIS]            Change the program used to disassemble the byte code
-                        files
-  -LIB [LIB]            Set the path where to find Archer libraries
-  -PLUGIN<sub>LIB</sub> [PLUGIN<sub>LIB]</sub>
-                        Set the path where to find Archer Plugin libraries
-  -OPENMP<sub>INCLUDE</sub> [OPENMP<sub>INCLUDE]</sub>
-                        Set the path where to find OpenMP headers
-  -g                    If the debugging flag is not present in the
-                        compilation command it will be added by default
-  -O0                   The optimization flags will be forced to '-O0'
-                        optimization level for analysis purposes
-  -O1
-  -O2
-  -O3
-  -Os
-  -Oz
-  -fopenmp              OpenMP flag
-  -liomp5               OpenMP library
-  -c                    Only run preprocess, compile, and assemble steps
-  -o [O]                Output filename
+    usage: clang-archer [-h] [-v] [-d] [--log] [-db] [-CC [CC]] [-USE_MPI]
+                        [-MPICC [MPICC]] [-OPT [OPT]] [-LINK [LINK]] [-DIS [DIS]]
+                        [-LIB [LIB]] [-PLUGIN_LIB [PLUGIN_LIB]]
+                        [-OPENMP_INCLUDE [OPENMP_INCLUDE]] [-g]
+                        [-O0 | -O1 | -O2 | -O3 | -Os | -Oz] [-fopenmp] [-liomp5]
+                        [-c] [-o [O]]
+    
+    Compile your program with Archer support, a data race detector for OpenMP programs.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      -d, --debug           Print the compiling commands
+      --log                 Keep intermediate logs
+      -db, --disable-blacklisting
+                            Disable static analysis and apply ThreadSanitizer
+                            instrumentation to the entire program
+      -CC [CC]              Change the program used to compile and link the
+                            programs
+      -USE_MPI              Link against MPI libraries
+      -MPICC [MPICC]        Change the program used to compile and link the MPI
+                            programs
+      -OPT [OPT]            Change the program used to optmize the programs
+      -LINK [LINK]          Change the program used to link the byte code files
+      -DIS [DIS]            Change the program used to disassemble the byte code
+                            files
+      -LIB [LIB]            Set the path where to find Archer libraries
+      -PLUGIN_LIB [PLUGIN_LIB]
+                            Set the path where to find Archer Plugin libraries
+      -OPENMP_INCLUDE [OPENMP_INCLUDE]
+                            Set the path where to find OpenMP headers
+      -g                    If the debugging flag is not present in the
+                            compilation command it will be added by default
+      -O0                   The optimization flags will be forced to '-O0'
+                            optimization level for analysis purposes
+      -O1
+      -O2
+      -O3
+      -Os
+      -Oz
+      -fopenmp              OpenMP flag
+      -liomp5               OpenMP library
+      -c                    Only run preprocess, compile, and assemble steps
+      -o [O]                Output filename
 
 # FAQ<a id="sec-4" name="sec-4"></a>
 
