@@ -46,6 +46,21 @@ Then build Archer by running =install.sh=:
 The installation script will create a folder called /LLVM/ at the same
 level of Archer.
 
+* Configuration
+
+When the installation is completed you need to setup your environement
+in order to allow Archer to work correctly.
+
+You have to set the following path variables:
+
+#+BEGIN_SRC
+export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}"
+export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
+#+END_SRC
+
+To make the environment permanent add the previous lines in your
+\"~/.bashrc\".
+
 * Usage
 
 ** How to compile
@@ -57,8 +72,8 @@ detection support for OpenMP programs.
 The Archer program is called /clang-archer/ and it can be used as a
 normal compiler (i.e. clang, gcc, etc.).
 
-Below different situations how to use /clang-archer/ to compiler your
-OpenMP programs.
+Below different situations how to use /clang-archer/ for compiling
+your OpenMP programs.
 
 *** Single source
 
@@ -66,7 +81,7 @@ OpenMP programs.
 clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
 #+END_SRC
 
-*** With Makefile
+*** Makefile
 
 In your Makefile set the following variables:
 
@@ -145,8 +160,6 @@ optional arguments:
   -o [O]                Output filename
 #+END_SRC
 
-* FAQ
-
 * Copyright
-#+HTML: <img src="resources/images/uofu_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="UofU Logo" title="University of Utah" align="left" />
-#+HTML: <img src="resources/images/llnl_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="LLNL Logo" title="Lawrence Livermore National Laboratory" align="right" />
+#+HTML: <img src="resources/images/uofu_logo.png" hspace="5" vspace="5" height="35%" width="35%" alt="UofU Logo" title="University of Utah" align="left" />
+#+HTML: <img src="resources/images/llnl_logo.png" hspace="5" vspace="5" height="50%" width="50%" alt="LLNL Logo" title="Lawrence Livermore National Laboratory" align="right" />

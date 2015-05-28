@@ -8,19 +8,19 @@
 <li><a href="#sec-2-1">2.1. Building</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. Usage</a>
+<li><a href="#sec-3">3. Configuration</a></li>
+<li><a href="#sec-4">4. Usage</a>
 <ul>
-<li><a href="#sec-3-1">3.1. How to compile</a>
+<li><a href="#sec-4-1">4.1. How to compile</a>
 <ul>
-<li><a href="#sec-3-1-1">3.1.1. Single source</a></li>
-<li><a href="#sec-3-1-2">3.1.2. With Makefile</a></li>
-<li><a href="#sec-3-1-3">3.1.3. Hybrid MPI-OpenMP programs</a></li>
+<li><a href="#sec-4-1-1">4.1.1. Single source</a></li>
+<li><a href="#sec-4-1-2">4.1.2. Makefile</a></li>
+<li><a href="#sec-4-1-3">4.1.3. Hybrid MPI-OpenMP programs</a></li>
 </ul>
 </li>
-<li><a href="#sec-3-2">3.2. Options</a></li>
+<li><a href="#sec-4-2">4.2. Options</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. FAQ</a></li>
 <li><a href="#sec-5">5. Copyright</a></li>
 </ul>
 </div>
@@ -58,9 +58,22 @@ Then build Archer by running `install.sh`:
 The installation script will create a folder called *LLVM* at the same
 level of Archer.
 
-# Usage<a id="sec-3" name="sec-3"></a>
+# Configuration<a id="sec-3" name="sec-3"></a>
 
-## How to compile<a id="sec-3-1" name="sec-3-1"></a>
+When the installation is completed you need to setup your environement
+in order to allow Archer to work correctly.
+
+You have to set the following path variables:
+
+    export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}"
+    export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
+
+To make the environment permanent add the previous lines in your
+\\"~/.bashrc\\".
+
+# Usage<a id="sec-4" name="sec-4"></a>
+
+## How to compile<a id="sec-4-1" name="sec-4-1"></a>
 
 Archer provides a command to compile your programs with Clang/LLVM
 OpenMP and obtain automatically and in transparent way data race
@@ -69,14 +82,14 @@ detection support for OpenMP programs.
 The Archer program is called *clang-archer* and it can be used as a
 normal compiler (i.e. clang, gcc, etc.).
 
-Below different situations how to use *clang-archer* to compiler your
-OpenMP programs.
+Below different situations how to use *clang-archer* for compiling
+your OpenMP programs.
 
-### Single source<a id="sec-3-1-1" name="sec-3-1-1"></a>
+### Single source<a id="sec-4-1-1" name="sec-4-1-1"></a>
 
     clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
 
-### With Makefile<a id="sec-3-1-2" name="sec-3-1-2"></a>
+### Makefile<a id="sec-4-1-2" name="sec-4-1-2"></a>
 
 In your Makefile set the following variables:
 
@@ -84,7 +97,7 @@ In your Makefile set the following variables:
     
     LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
-### Hybrid MPI-OpenMP programs<a id="sec-3-1-3" name="sec-3-1-3"></a>
+### Hybrid MPI-OpenMP programs<a id="sec-4-1-3" name="sec-4-1-3"></a>
 
 In your Makefile set the following variables:
 
@@ -94,7 +107,7 @@ In your Makefile set the following variables:
     
     LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
-## Options<a id="sec-3-2" name="sec-3-2"></a>
+## Options<a id="sec-4-2" name="sec-4-2"></a>
 
 Running the following command:
 
@@ -146,8 +159,6 @@ will be shown the options available with Archer/Clang.
       -liomp5               OpenMP library
       -c                    Only run preprocess, compile, and assemble steps
       -o [O]                Output filename
-
-# FAQ<a id="sec-4" name="sec-4"></a>
 
 # Copyright<a id="sec-5" name="sec-5"></a>
 
