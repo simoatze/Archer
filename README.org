@@ -59,7 +59,7 @@ export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM
 #+END_SRC
 
 To make the environment permanent add the previous lines in your
-\"~/.bashrc\".
+"~/.bashrc".
 
 * Usage
 

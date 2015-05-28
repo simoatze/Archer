@@ -69,7 +69,7 @@ You have to set the following path variables:
     export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
 
 To make the environment permanent add the previous lines in your
-\\"~/.bashrc\\".
+"~/.bashrc".
 
 # Usage<a id="sec-4" name="sec-4"></a>
 
