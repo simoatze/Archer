@@ -103,7 +103,7 @@ def executeCommand(cmd, args):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.communicate()[0]
     regex = re.compile(r'\s+')
-    if regex.sub('', output) is not '':
+    if regex.sub('', output):
         print output
     compileErrorCheck(p, cmd, output)
 

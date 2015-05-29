@@ -225,14 +225,14 @@ make install
 
 # Compiling and installing Intel OpenMP Runtime
 echoc "Building Intel OpenMP Runtime..."
-cd ${INTELOMPRT}
-cd libomp_oss/cmake
-CC=$(which gcc) CXX=$(which g++) cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
+cd ${INTELOMPRT}/libomp_oss
+mkdir build && cd build
+CC=$(which gcc) CXX=$(which g++) cmake ..
 make -j${PROCS} -l${PROCS}
-cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib ${LLVM_INSTALL}/lib/intelomprt
-cd ${INTELOMPRT}
-cd libomp_oss_patched/cmake
-CC=$(which gcc) CXX=$(which g++) cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
+cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib/libiomp5.* ${LLVM_INSTALL}/lib/intelomprt
+cd ${INTELOMPRT}/libomp_oss_patched
+mkdir build && cd build
+CC=$(which gcc) CXX=$(which g++) cmake ..
 make -j${PROCS} -l${PROCS}
 cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
 cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
