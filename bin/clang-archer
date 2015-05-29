@@ -41,14 +41,16 @@ ARCHER_DDA_FLAG = '-archer-dda'
 LINKING=False
 COMPILE_AND_LINK=False
 KEEP_LOGS=False
+NO_BLACKLISTING=False
 OPT_FLAGS = [ "O0", "O1", "O2", "O3", "Os", "Oz" ]
 OPT_FLAG="-O0"
 
 def cleanLogs():
-    file = open(LOGS_LIST, "r")
-    for line in file:
-        shutil.rmtree(line.split('\n')[0], ignore_errors = True)
-    file.close()
+    if os.path.exists(LOGS_LIST):
+        file = open(LOGS_LIST, "r")
+        for line in file:
+            shutil.rmtree(line.split('\n')[0], ignore_errors = True)
+        file.close()
     os.system("rm -rf /tmp/*.ach")
 
 def signal_handler(signal, frame):
@@ -110,6 +112,7 @@ def argumentsParser():
     parser.add_argument('-v', '--version', action='version', version='Archer ' + VERSION + '\nCopyright (C) 2015')
     parser.add_argument('-d', '--debug', action='store_true', help='Print the compiling commands')
     parser.add_argument('--log', action='store_true', help='Keep intermediate logs')
+    parser.add_argument('-db', '--disable-blacklisting', action='store_true', help='Disable static analysis and apply ThreadSanitizer instrumentation to the entire program')
     parser.add_argument('-CC', nargs='?', default='clang', help='Change the program used to compile and link the programs')
     parser.add_argument('-USE_MPI', action='store_true', help='Link against MPI libraries')
     parser.add_argument('-MPICC', nargs='?', default='mpicc', help='Change the program used to compile and link the MPI programs')
@@ -138,6 +141,7 @@ def argumentsParser():
     return parser
 
 def archerBuild(args):
+    print "Building..."
 
     mkdir_p('.archer')
     logPath(os.getcwd() + "/.archer")
@@ -188,6 +192,17 @@ def archerBuild(args):
     executeCommand(clangCommand, args)
     # Clang Plugin to find OpenMP constructs information
 
+def archerBuildNB(args):
+    print "Building..."
+
+    clangCommand = [ args.CC ]
+    clangCommand += [ "-g", OPT_FLAG ]
+    if(args.fopenmp):
+        clangCommand += [ "-fopenmp" ]
+    clangCommand += [ "-fsanitize=thread", "-c", args.src, '-I' + args.OPENMP_INCLUDE]
+    clangCommand.extend(args.unknown)
+    executeCommand(clangCommand, args)
+
 def archerLink(args):
     print "Linking..."
 
@@ -236,7 +251,7 @@ def archerLink(args):
 
             arg = item[2]
             clangCommand = [ arg.CC ]
-            clangCommand += [ "-g", "-O0" ]
+            clangCommand += [ "-g", OPT_FLAG ]
             if(arg.fopenmp):
                 clangCommand += [ "-fopenmp" ]
             lst = item[0].rsplit("/", 1)
@@ -316,6 +331,38 @@ def archerLink(args):
             f.write('1')
             f.close()
 
+def archerLinkNB(args):
+    print "Linking..."
+
+    # Check if an ar command has been executed
+    # if so execute them else link the object
+    # files all together
+    if COMPILE_AND_LINK:
+        if args.USE_MPI:
+            clangCommand = [ args.MPICC, '-cc=' + args.CC ]
+        else:
+            clangCommand = [ args.CC ]
+        clangCommand += [ "-g", OPT_FLAG, "-fopenmp", "-fsanitize=thread", "-o", args.o, args.src, '-I' + args.OPENMP_INCLUDE ]
+        clangCommand.extend(args.unknown)
+        clangCommand += [ "-liomp5_tsan" ]
+        executeCommand(clangCommand, args)
+    else:
+        if args.USE_MPI:
+            clangCommand = [ args.MPICC, '-cc=' + args.CC ]
+        else:
+            clangCommand = [ args.CC ]
+        clangCommand += [ "-fopenmp", "-fsanitize=thread", "-o", args.o, args.obj ]
+        clangCommand.extend(args.unknown)
+        clangCommand += [ "-liomp5_tsan" ]
+        executeCommand(clangCommand, args)
+
+    if not KEEP_LOGS:
+        cleanLogs()
+    else:
+        with open(LOGS_FLAG, "w") as f:
+            f.write('1')
+            f.close()
+
 if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -343,6 +390,7 @@ if __name__ == '__main__':
     args, unknown = parser.parse_known_args()
 
     KEEP_LOGS = args.log
+    NO_BLACKLISTING = args.disable_blacklisting
 
     # find source file .c, .cc, .cpp, .cxx in unknown arguments
     if args.c is False:
@@ -391,12 +439,22 @@ if __name__ == '__main__':
         if args.__dict__[arg]:
             OPT_FLAG = "-" + arg
 
-    if COMPILE_AND_LINK:
-        print "Compiling and Linking"
-        archerBuild(args)
-        archerLink(args)
-    else:
-        if not LINKING:
-            archerBuild(args)
+    if NO_BLACKLISTING:
+        if COMPILE_AND_LINK:
+            print "Compiling and Linking"
+            archerLinkNB(args)
         else:
+            if not LINKING:
+                archerBuildNB(args)
+            else:
+                archerLinkNB(args)
+    else:
+        if COMPILE_AND_LINK:
+            print "Compiling and Linking"
+            archerBuild(args)
             archerLink(args)
+        else:
+            if not LINKING:
+                archerBuild(args)
+            else:
+                archerLink(args)
