@@ -234,6 +234,7 @@ cd ${INTELOMPRT}/libomp_oss_patched
 mkdir build && cd build
 CC=$(which gcc) CXX=$(which g++) cmake ..
 make -j${PROCS} -l${PROCS}
+make common
 cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
 cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
 # Installing Instrumented Intel OpenMP Runtime (temporary until patch)
