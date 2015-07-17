@@ -229,7 +229,7 @@ echoc "Building Intel OpenMP Runtime..."
 cd ${INTELOMPRT}/libomp_oss
 # mkdir -p build && cd build
 # CC=${LLVM_INSTALL}/bin/clang CXX=${LLVM_INSTALL}/bin/clang++ cmake -G "Unix Makefiles" -DTSAN_SUPPORT=ON -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL} ..
-make -j${PROCS} -l${PROCS} compiler=clang
+make -j${PROCS} -l${PROCS} compiler=clang tsan=disabled
 cp ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib/*.so ${LLVM_INSTALL}/lib
 make clean
 make -j${PROCS} -l${PROCS} compiler=clang tsan=enabled
