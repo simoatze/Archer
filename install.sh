@@ -195,8 +195,8 @@ patch -p 1 < ${WORKING_DIR}/patch/compiler-rt-intelomprt.patch
 cd ${INTELOMPRT}
 tar xzvf ${INTELOMPRT_FILE}
 patch -p 1 < ${WORKING_DIR}/patch/libomp_oss_${INTELOMPRT_VERSION}.patch
-mv libomp_oss libomp_oss_patched
-tar xzvf ${INTELOMPRT_FILE}
+# mv libomp_oss libomp_oss_patched
+# tar xzvf ${INTELOMPRT_FILE}
 
 # Compiling and installing Cloog (dependency for Polly)
 echo
@@ -226,17 +226,23 @@ make install
 # Compiling and installing Intel OpenMP Runtime
 echoc "Building Intel OpenMP Runtime..."
 cd ${INTELOMPRT}/libomp_oss
-mkdir build && cd build
-CC=$(which gcc) CXX=$(which g++) cmake ..
+mkdir -p build && cd build
+CC=${LLVM_INSTALL}/bin/clang CXX=${LLVM_INSTALL}/bin/clang++ cmake -G "Unix Makefiles" -DTSAN_SUPPORT=ON -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL} ..
 make -j${PROCS} -l${PROCS}
-cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib/libiomp5.* ${LLVM_INSTALL}/lib/intelomprt
-cd ${INTELOMPRT}/libomp_oss_patched
-mkdir build && cd build
-CC=$(which gcc) CXX=$(which g++) cmake ..
-make -j${PROCS} -l${PROCS}
-make common
-cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
-cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
+make install
+# echoc "Building Intel OpenMP Runtime..."
+# cd ${INTELOMPRT}/libomp_oss
+# mkdir build && cd build
+# CC=$(which gcc) CXX=$(which g++) cmake ..
+# make -j${PROCS} -l${PROCS}
+# cp -r ${INTELOMPRT}/libomp_oss/exports/lin_32e/lib/libiomp5.* ${LLVM_INSTALL}/lib/intelomprt
+# cd ${INTELOMPRT}/libomp_oss_patched
+# mkdir build && cd build
+# CC=$(which gcc) CXX=$(which g++) cmake ..
+# make -j${PROCS} -l${PROCS}
+# make common
+# cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.dbg ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.dbg
+# cp ${INTELOMPRT}/libomp_oss_patched/exports/lin_32e/lib/libiomp5.so ${LLVM_INSTALL}/lib/intelomprt/libiomp5_tsan.so
 # Installing Instrumented Intel OpenMP Runtime (temporary until patch)
 # cp ${WORKING_DIR}/intelomprt/*.so ${LLVM_INSTALL}/lib/intelomprt
 
@@ -248,8 +254,9 @@ mkdir -p ${ARCHER_INSTALL}
 cd ${WORKING_DIR}
 cp -R ${WORKING_DIR}/bin ${ARCHER_INSTALL}
 cp -R ${WORKING_DIR}/lib ${ARCHER_INSTALL}
-mkdir ${ARCHER_INSTALL}/include
-cp ${INTELOMPRT}/libomp_oss/cmake/omp.h ${ARCHER_INSTALL}/include
+mkdir -p ${ARCHER_INSTALL}/include
+mkdir -p ${LLVM_INSTALL}/include
+cp ${INTELOMPRT}/libomp_oss/build/omp.h ${LLVM_INSTALL}/include
 
 echo
 echo "In order to use LLVM/Clang, the Intel OpenMP Runtime and Archer"
