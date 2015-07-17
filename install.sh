@@ -194,6 +194,7 @@ cd ${LLVMRT_SRC}
 patch -p 1 < ${WORKING_DIR}/patch/compiler-rt-intelomprt.patch
 cd ${INTELOMPRT}
 tar xzvf ${INTELOMPRT_FILE}
+cd libomp_oss
 patch -p 1 < ${WORKING_DIR}/patch/libomp_${INTELOMPRT_VERSION}_oss.patch
 # mv libomp_oss libomp_oss_patched
 # tar xzvf ${INTELOMPRT_FILE}
