@@ -1,4 +1,4 @@
-#+TITLE:     Archer
+pooo#+TITLE:     Archer
 #+AUTHOR:    Simone Atzeni
 #+EMAIL:     simone@cs.utah.edu
 #+DATE:      2014-10-22 Wed
@@ -14,6 +14,8 @@
 #+LINK_HOME:
 #+XSLT:
 
+* License
+Please see LICENSE for usage terms.
 * Introduction
 #+HTML: <img src="resources/images/archer_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
@@ -160,6 +162,6 @@ optional arguments:
   -o [O]                Output filename
 #+END_SRC
 
-* Copyright
+* Logos
 #+HTML: <img src="resources/images/uofu_logo.png" hspace="5" vspace="5" height="35%" width="35%" alt="UofU Logo" title="University of Utah" align="left" />
 #+HTML: <img src="resources/images/llnl_logo.png" hspace="5" vspace="5" height="50%" width="50%" alt="LLNL Logo" title="Lawrence Livermore National Laboratory" align="right" />
