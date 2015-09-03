@@ -2,32 +2,38 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. Introduction</a></li>
-<li><a href="#sec-2">2. Installation</a>
+<li><a href="#sec-1">1. License</a></li>
+<li><a href="#sec-2">2. Introduction</a></li>
+<li><a href="#sec-3">3. Installation</a>
 <ul>
-<li><a href="#sec-2-1">2.1. Building</a></li>
+<li><a href="#sec-3-1">3.1. Building</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. Configuration</a></li>
-<li><a href="#sec-4">4. Usage</a>
+<li><a href="#sec-4">4. Configuration</a></li>
+<li><a href="#sec-5">5. Usage</a>
 <ul>
-<li><a href="#sec-4-1">4.1. How to compile</a>
+<li><a href="#sec-5-1">5.1. How to compile</a>
 <ul>
-<li><a href="#sec-4-1-1">4.1.1. Single source</a></li>
-<li><a href="#sec-4-1-2">4.1.2. Makefile</a></li>
-<li><a href="#sec-4-1-3">4.1.3. Hybrid MPI-OpenMP programs</a></li>
+<li><a href="#sec-5-1-1">5.1.1. Single source</a></li>
+<li><a href="#sec-5-1-2">5.1.2. Makefile</a></li>
+<li><a href="#sec-5-1-3">5.1.3. Hybrid MPI-OpenMP programs</a></li>
 </ul>
 </li>
-<li><a href="#sec-4-2">4.2. Options</a></li>
+<li><a href="#sec-5-2">5.2. Options</a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5. Copyright</a></li>
+<li><a href="#sec-6">6. Logos</a></li>
 </ul>
 </div>
 </div>
 
+pooo#+TITLE:     Archer
 
-# Introduction<a id="sec-1" name="sec-1"></a>
+# License<a id="sec-1" name="sec-1"></a>
+
+Please see LICENSE for usage terms.
+
+# Introduction<a id="sec-2" name="sec-2"></a>
 
 <img src="resources/images/archer_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
@@ -40,12 +46,12 @@ runtime and memory overhead, while still offering high accuracy and
 precision. It builds on the open-source infrastructures LLVM and
 ThreadSanitizer to provide portability.
 
-# Installation<a id="sec-2" name="sec-2"></a>
+# Installation<a id="sec-3" name="sec-3"></a>
 
 Archer has been developed under LLVM 3.5 with OpenMP support (for
 more information go to <http://clang-omp.github.io>).
 
-## Building<a id="sec-2-1" name="sec-2-1"></a>
+## Building<a id="sec-3-1" name="sec-3-1"></a>
 
 First obtain Archer, e.g. from Github (<https://github.com/soarlab/Archer>):
 
@@ -58,7 +64,7 @@ Then build Archer by running `install.sh`:
 The installation script will create a folder called *LLVM* at the same
 level of Archer.
 
-# Configuration<a id="sec-3" name="sec-3"></a>
+# Configuration<a id="sec-4" name="sec-4"></a>
 
 When the installation is completed you need to setup your environement
 in order to allow Archer to work correctly.
@@ -71,9 +77,9 @@ You have to set the following path variables:
 To make the environment permanent add the previous lines in your
 "~/.bashrc".
 
-# Usage<a id="sec-4" name="sec-4"></a>
+# Usage<a id="sec-5" name="sec-5"></a>
 
-## How to compile<a id="sec-4-1" name="sec-4-1"></a>
+## How to compile<a id="sec-5-1" name="sec-5-1"></a>
 
 Archer provides a command to compile your programs with Clang/LLVM
 OpenMP and obtain automatically and in transparent way data race
@@ -85,11 +91,11 @@ normal compiler (i.e. clang, gcc, etc.).
 Below different situations how to use *clang-archer* for compiling
 your OpenMP programs.
 
-### Single source<a id="sec-4-1-1" name="sec-4-1-1"></a>
+### Single source<a id="sec-5-1-1" name="sec-5-1-1"></a>
 
     clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
 
-### Makefile<a id="sec-4-1-2" name="sec-4-1-2"></a>
+### Makefile<a id="sec-5-1-2" name="sec-5-1-2"></a>
 
 In your Makefile set the following variables:
 
@@ -97,7 +103,7 @@ In your Makefile set the following variables:
     
     LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
-### Hybrid MPI-OpenMP programs<a id="sec-4-1-3" name="sec-4-1-3"></a>
+### Hybrid MPI-OpenMP programs<a id="sec-5-1-3" name="sec-5-1-3"></a>
 
 In your Makefile set the following variables:
 
@@ -107,7 +113,7 @@ In your Makefile set the following variables:
     
     LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
-## Options<a id="sec-4-2" name="sec-4-2"></a>
+## Options<a id="sec-5-2" name="sec-5-2"></a>
 
 Running the following command:
 
@@ -160,7 +166,7 @@ will be shown the options available with Archer/Clang.
       -c                    Only run preprocess, compile, and assemble steps
       -o [O]                Output filename
 
-# Copyright<a id="sec-5" name="sec-5"></a>
+# Logos<a id="sec-6" name="sec-6"></a>
 
 <img src="resources/images/uofu_logo.png" hspace="5" vspace="5" height="35%" width="35%" alt="UofU Logo" title="University of Utah" align="left" />
 
