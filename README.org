@@ -22,11 +22,11 @@ Please see LICENSE for usage terms.
 *Archer* is a data race detector for OpenMP programs.
 # <span style="font-weight: bold; font-variant: small-caps">archer</span>
 
-Archer combines static and dynamic techniques to
-identify data races in large OpenMP applications, generating low
-runtime and memory overhead, while still offering high accuracy and
-precision. It builds on the open-source infrastructures LLVM and
-ThreadSanitizer to provide portability.
+Archer combines static and dynamic techniques to identify data races
+in large OpenMP applications, leading to low runtime and memory
+overheads, while still offering high accuracy and precision. It builds
+on open-source tools infrastructure such as LLVM and ThreadSanitizer
+to provide portability.
 
 * Installation
 Archer has been developed under LLVM 3.5 with OpenMP support (for
@@ -39,43 +39,44 @@ First obtain Archer, e.g. from Github (https://github.com/soarlab/Archer):
   git clone git@github.com:soarlab/Archer.git Archer
 #+END_SRC
 
-Then build Archer by running =install.sh=:
+Then, build Archer by running =install.sh=:
 
 #+BEGIN_SRC sh :exports code
   ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
 #+END_SRC
 
-The installation script will create a folder called /LLVM/ at the same
-level of Archer.
+The installation script will create a folder called *LLVM* at the same
+level of the Archer directory and install LLVM to <llvm_install_path>.
 
 * Configuration
 
-When the installation is completed you need to setup your environement
-in order to allow Archer to work correctly.
+Once the installation completes, you need to setup your environement
+to allow Archer to work correctly.
 
-You have to set the following path variables:
+Please set the following path variables:
 
 #+BEGIN_SRC
 export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}"
 export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
 #+END_SRC
 
-To make the environment permanent add the previous lines in your
-"~/.bashrc".
+To make the environment permanent add the previous lines or equivalents to your
+shell start-up script such as "~/.bashrc".
 
 * Usage
 
 ** How to compile
 
 Archer provides a command to compile your programs with Clang/LLVM
-OpenMP and obtain automatically and in transparent way data race
-detection support for OpenMP programs.
+OpenMP and hide all the mechanics necessary to detect data races
+automatically in your OpenMP programs.
 
-The Archer program is called /clang-archer/ and it can be used as a
-normal compiler (i.e. clang, gcc, etc.).
+This Archer command is called /clang-archer/, and this can be used as
+a drop-in replacement of your compiler command (e.g., clang, gcc,
+etc.).
 
-Below different situations how to use /clang-archer/ for compiling
-your OpenMP programs.
+The following are some of the examples of how one can integrate
+/clang-archer/ into his/her build system.
 
 *** Single source
 
@@ -85,7 +86,7 @@ clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
 
 *** Makefile
 
-In your Makefile set the following variables:
+In your Makefile, set the following variables:
 
 #+BEGIN_SRC
 CC = clang-archer
@@ -95,7 +96,7 @@ LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
 *** Hybrid MPI-OpenMP programs
 
-In your Makefile set the following variables:
+In your Makefile, set the following variables:
 
 #+BEGIN_SRC
 CC = mpicc -cc=clang-archer
@@ -113,7 +114,7 @@ Running the following command:
 clang-archer --help
 #+END_SRC
 
-will be shown the options available with Archer/Clang.
+shows the options available with /clang-archer/.
 
 #+BEGIN_SRC
 usage: clang-archer [-h] [-v] [-d] [--log] [-db] [-CC [CC]] [-USE_MPI]
