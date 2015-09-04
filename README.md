@@ -27,8 +27,6 @@
 </div>
 </div>
 
-pooo#+TITLE:     Archer
-
 # License<a id="sec-1" name="sec-1"></a>
 
 Please see LICENSE for usage terms.
@@ -37,13 +35,13 @@ Please see LICENSE for usage terms.
 
 <img src="resources/images/archer_logo.png" hspace="5" vspace="5" height="45%" width="45%" alt="Archer Logo" title="Archer" align="right" />
 
-**Archer** is a data race detector for OpenMP programs.
+**Archer** is a data-race detector for OpenMP programs.
 
 
 Archer combines static and dynamic techniques to
-identify data races in large OpenMP applications, generating low
-runtime and memory overhead, while still offering high accuracy and
-precision. It builds on the open-source infrastructures LLVM and
+identify data races in large OpenMP applications, leading to low
+runtime and memory overheads, while still offering high accuracy and
+precision. It builds on open-source tools infrastructure such as LLVM and
 ThreadSanitizer to provide portability.
 
 # Installation<a id="sec-3" name="sec-3"></a>
@@ -57,39 +55,39 @@ First obtain Archer, e.g. from Github (<https://github.com/soarlab/Archer>):
 
     git clone git@github.com:soarlab/Archer.git Archer
 
-Then build Archer by running `install.sh`:
+Then, build Archer by running `install.sh`:
 
-    ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
+    ./install.sh --prefix=<llvm_install_path> [default: --prefix=/usr]
 
 The installation script will create a folder called *LLVM* at the same
-level of Archer.
+level of the Archer directory and install LLVM to <llvm_install_path>.
 
 # Configuration<a id="sec-4" name="sec-4"></a>
 
-When the installation is completed you need to setup your environement
-in order to allow Archer to work correctly.
+Once the installation completes, you need to setup your environement
+to allow Archer to work correctly.
 
-You have to set the following path variables:
+Please set the following path variables:
 
     export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}"
     export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
 
-To make the environment permanent add the previous lines in your
-"~/.bashrc".
+To make the environment permanent add the previous lines or equivalents to your
+shell start-up stript such as "~/.bashrc".
 
 # Usage<a id="sec-5" name="sec-5"></a>
 
 ## How to compile<a id="sec-5-1" name="sec-5-1"></a>
 
 Archer provides a command to compile your programs with Clang/LLVM
-OpenMP and obtain automatically and in transparent way data race
-detection support for OpenMP programs.
+OpenMP and hide all the mechanics neccessary to detect data races
+automatically in your OpenMP programs.
 
-The Archer program is called *clang-archer* and it can be used as a
-normal compiler (i.e. clang, gcc, etc.).
+This Archer command is called *clang-archer*, and this can be used as a
+drop-in replacement of your compiler command (e.g., clang, gcc, etc.).
 
-Below different situations how to use *clang-archer* for compiling
-your OpenMP programs.
+The following are some of the examples of how one can integrate *clang-archer* 
+into his/her build system. 
 
 ### Single source<a id="sec-5-1-1" name="sec-5-1-1"></a>
 
@@ -97,7 +95,7 @@ your OpenMP programs.
 
 ### Makefile<a id="sec-5-1-2" name="sec-5-1-2"></a>
 
-In your Makefile set the following variables:
+In your Makefile, set the following variables:
 
     CC = clang-archer
     
@@ -105,7 +103,7 @@ In your Makefile set the following variables:
 
 ### Hybrid MPI-OpenMP programs<a id="sec-5-1-3" name="sec-5-1-3"></a>
 
-In your Makefile set the following variables:
+In your Makefile, set the following variables:
 
     CC = mpicc -cc=clang-archer
     
@@ -119,7 +117,7 @@ Running the following command:
 
     clang-archer --help
 
-will be shown the options available with Archer/Clang.
+shows the options available with *clang-archer*.
 
     usage: clang-archer [-h] [-v] [-d] [--log] [-db] [-CC [CC]] [-USE_MPI]
                         [-MPICC [MPICC]] [-OPT [OPT]] [-LINK [LINK]] [-DIS [DIS]]
