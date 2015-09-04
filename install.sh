@@ -315,7 +315,8 @@ echo
 echoc "export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}"
 echoc "export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
 echo
-echo "or add them previous line in your \"~/.bashrc\"."
+echo "or add the previous line to your"
+echo "shell start-up script such as "~/.bashrc".
 echo
 echo
 echoc "LLVM installation completed."

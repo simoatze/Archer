@@ -4,25 +4,26 @@
 <ul>
 <li><a href="#sec-1">1. License</a></li>
 <li><a href="#sec-2">2. Introduction</a></li>
-<li><a href="#sec-3">3. Installation</a>
+<li><a href="#sec-3">3. Prerequisites</a></li>
+<li><a href="#sec-4">4. Installation</a>
 <ul>
-<li><a href="#sec-3-1">3.1. Building</a></li>
+<li><a href="#sec-4-1">4.1. Building</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. Configuration</a></li>
-<li><a href="#sec-5">5. Usage</a>
+<li><a href="#sec-5">5. Configuration</a></li>
+<li><a href="#sec-6">6. Usage</a>
 <ul>
-<li><a href="#sec-5-1">5.1. How to compile</a>
+<li><a href="#sec-6-1">6.1. How to compile</a>
 <ul>
-<li><a href="#sec-5-1-1">5.1.1. Single source</a></li>
-<li><a href="#sec-5-1-2">5.1.2. Makefile</a></li>
-<li><a href="#sec-5-1-3">5.1.3. Hybrid MPI-OpenMP programs</a></li>
+<li><a href="#sec-6-1-1">6.1.1. Single source</a></li>
+<li><a href="#sec-6-1-2">6.1.2. Makefile</a></li>
+<li><a href="#sec-6-1-3">6.1.3. Hybrid MPI-OpenMP programs</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-2">5.2. Options</a></li>
+<li><a href="#sec-6-2">6.2. Options</a></li>
 </ul>
 </li>
-<li><a href="#sec-6">6. Logos</a></li>
+<li><a href="#sec-7">7. Logos</a></li>
 </ul>
 </div>
 </div>
@@ -46,12 +47,16 @@ overheads, while still offering high accuracy and precision. It builds
 on open-source tools infrastructure such as LLVM and ThreadSanitizer
 to provide portability.
 
-# Installation<a id="sec-3" name="sec-3"></a>
+# Prerequisites<a id="sec-3" name="sec-3"></a>
+
+To compile Archer you need an host GCC version >= 4.7.
+
+# Installation<a id="sec-4" name="sec-4"></a>
 
 Archer has been developed under LLVM 3.5 with OpenMP support (for
 more information go to <http://clang-omp.github.io>).
 
-## Building<a id="sec-3-1" name="sec-3-1"></a>
+## Building<a id="sec-4-1" name="sec-4-1"></a>
 
 First obtain Archer, e.g. from Github (<https://github.com/soarlab/Archer>):
 
@@ -64,7 +69,7 @@ Then, build Archer by running `install.sh`:
 The installation script will create a folder called **LLVM** at the same
 level of the Archer directory and install LLVM to <llvm<sub>install</sub><sub>path</sub>>.
 
-# Configuration<a id="sec-4" name="sec-4"></a>
+# Configuration<a id="sec-5" name="sec-5"></a>
 
 Once the installation completes, you need to setup your environement
 to allow Archer to work correctly.
@@ -77,9 +82,19 @@ Please set the following path variables:
 To make the environment permanent add the previous lines or equivalents to your
 shell start-up script such as "~/.bashrc".
 
-# Usage<a id="sec-5" name="sec-5"></a>
+WARNING: 
 
-## How to compile<a id="sec-5-1" name="sec-5-1"></a>
+During the installation process you may see an error like the following:
+
+    CMake Error: install(EXPORT "LLVMExports" ...) includes target "opt" which requires target "Polly" that is not in the export set.
+    CMake Error: install(EXPORT "LLVMExports" ...) includes target "bugpoint" which requires target "Polly" that is not in the export set.
+
+It is an error related to the CMake configuration process of Polly. It does not affect your installation.
+Future versions of Archer will upgrade Polly to the latest version avoiding this problem.
+
+# Usage<a id="sec-6" name="sec-6"></a>
+
+## How to compile<a id="sec-6-1" name="sec-6-1"></a>
 
 Archer provides a command to compile your programs with Clang/LLVM
 OpenMP and hide all the mechanics necessary to detect data races
@@ -92,11 +107,11 @@ etc.).
 The following are some of the examples of how one can integrate
 *clang-archer* into his/her build system.
 
-### Single source<a id="sec-5-1-1" name="sec-5-1-1"></a>
+### Single source<a id="sec-6-1-1" name="sec-6-1-1"></a>
 
     clang-archer example.c -L/path/to/openmp/runtime -lOMPRT -o example
 
-### Makefile<a id="sec-5-1-2" name="sec-5-1-2"></a>
+### Makefile<a id="sec-6-1-2" name="sec-6-1-2"></a>
 
 In your Makefile, set the following variables:
 
@@ -104,7 +119,7 @@ In your Makefile, set the following variables:
     
     LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
-### Hybrid MPI-OpenMP programs<a id="sec-5-1-3" name="sec-5-1-3"></a>
+### Hybrid MPI-OpenMP programs<a id="sec-6-1-3" name="sec-6-1-3"></a>
 
 In your Makefile, set the following variables:
 
@@ -114,7 +129,7 @@ In your Makefile, set the following variables:
     
     LDFLAGS = -L/path/to/openmp/runtime -lOMPRT
 
-## Options<a id="sec-5-2" name="sec-5-2"></a>
+## Options<a id="sec-6-2" name="sec-6-2"></a>
 
 Running the following command:
 
@@ -167,7 +182,7 @@ shows the options available with *clang-archer*.
       -c                    Only run preprocess, compile, and assemble steps
       -o [O]                Output filename
 
-# Logos<a id="sec-6" name="sec-6"></a>
+# Logos<a id="sec-7" name="sec-7"></a>
 
 <img src="resources/images/uofu_logo.png" hspace="5" vspace="5" height="35%" width="35%" alt="UofU Logo" title="University of Utah" align="left" />
 

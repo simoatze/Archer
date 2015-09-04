@@ -28,6 +28,9 @@ overheads, while still offering high accuracy and precision. It builds
 on open-source tools infrastructure such as LLVM and ThreadSanitizer
 to provide portability.
 
+* Prerequisites
+To compile Archer you need an host GCC version >= 4.7.
+
 * Installation
 Archer has been developed under LLVM 3.5 with OpenMP support (for
 more information go to http://clang-omp.github.io).
@@ -62,6 +65,18 @@ export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/lib/intelomprt:${LLVM
 
 To make the environment permanent add the previous lines or equivalents to your
 shell start-up script such as "~/.bashrc".
+
+WARNING: 
+
+During the installation process you may see an error like the following:
+
+#+BEGIN_SRC
+CMake Error: install(EXPORT "LLVMExports" ...) includes target "opt" which requires target "Polly" that is not in the export set.
+CMake Error: install(EXPORT "LLVMExports" ...) includes target "bugpoint" which requires target "Polly" that is not in the export set.
+#+END_SRC
+
+It is an error related to the CMake configuration process of Polly. It does not affect your installation.
+Future versions of Archer will upgrade Polly to the latest version avoiding this problem.
 
 * Usage
 
