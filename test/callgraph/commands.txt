@@ -1,5 +1,0 @@
-clang -emit-llvm -S -c ompex.c | opt -O1 | opt -dot-callgraph -o /dev/null && dot -Tpdf callgraph.dot -o callgraph.pdf
-
-clang -emit-llvm -S -c -fopenmp -g -O0 ompex.c | opt -O1 | opt -dot-cfg -o /dev/null && dot -Tpdf cfg.vector_sum.dot -o cfg.vector_sum.pdf
-
-./graph-llvm-ir ./example.ll && dot -Tpdf vector_sum.dot -o vector_sum.pdf
