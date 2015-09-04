@@ -267,6 +267,9 @@ cp ${LLVM_BUILD}/lib/ArcherPlugin.so ${LLVM_INSTALL}/lib
 echoc "Installing LLVM/Clang OpenMP..."
 make install
 
+export PATH=${LLVM_INSTALL}/bin:${PATH}
+export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LD_LIBRARY_PATH}
+
 # Compiling and installing Intel OpenMP Runtime
 echoc "Building Intel OpenMP Runtime..."
 cd ${INTELOMPRT}/libomp_oss
