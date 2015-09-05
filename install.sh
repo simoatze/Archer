@@ -58,6 +58,7 @@ echoc() { echo -e "${RED}$1${NC}"; }
 LLVM_INSTALL=/usr
 HTTP=false
 LLVM_TRUNK=false
+GCC_TOOLCHAIN_PATH=
 
 # CC and CXX
 for i in "$@"
@@ -73,6 +74,10 @@ do
 	    ;;
 	--llvm-trunk)
 	    LLVM_TRUNK=true
+	    shift
+	    ;;
+	--gcc-toolchain-path=*)
+	    GCC_TOOLCHAIN_PATH="-D GCC_INSTALL_PREFIX=${i#*=}"
 	    shift
 	    ;;
 	*)
@@ -259,7 +264,7 @@ echoc "Building LLVM/Clang OpenMP..."
 cp -R ${WORKING_DIR}/plugins/ArcherPlugin ${LLVM_SRC}/tools/clang/examples
 echo "add_subdirectory(ArcherPlugin)" >> ${LLVM_SRC}/tools/clang/examples/CMakeLists.txt
 cd ${LLVM_BUILD}
-CC=$(which gcc) CXX=$(which g++) cmake -D CMAKE_INSTALL_PREFIX:PATH=${LLVM_INSTALL} -D CMAKE_PREFIX_PATH=${CLOOG_INSTALL} -D LINK_POLLY_INTO_TOOLS:Bool=ON ${LLVM_SRC}
+CC=$(which gcc) CXX=$(which g++) cmake -D CMAKE_INSTALL_PREFIX:PATH=${LLVM_INSTALL} ${GCC_TOOLCHAIN_PATH} -D CMAKE_PREFIX_PATH=${CLOOG_INSTALL} -D LINK_POLLY_INTO_TOOLS:Bool=ON ${LLVM_SRC}
 make [REQUIRES_RTTI=1]* -j${PROCS} -l${PROCS}
 echoc "Building Archer Plugins..."
 make ArcherPlugin
@@ -316,7 +321,7 @@ echoc "export PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/bin:\${PATH}
 echoc "export LD_LIBRARY_PATH=${LLVM_INSTALL}/bin:${LLVM_INSTALL}/local/archer/lib:\${LD_LIBRARY_PATH}"
 echo
 echo "or add the previous line to your"
-echo "shell start-up script such as "~/.bashrc".
+echo "shell start-up script such as \"~/.bashrc\"".
 echo
 echo
 echoc "LLVM installation completed."
