@@ -66,7 +66,7 @@ Then, build Archer by running `install.sh`:
     ./install.sh --prefix=llvm_install_path [default: --prefix=/usr]
 
 The installation script will create a folder called **LLVM** at the same
-level of the Archer directory and install LLVM to <llvm_install_path>.
+level of the Archer directory and install LLVM to *llvm_install_path*.
 
 In case your GCC is not installed in a standard path you need to
 specify the GCC toolchain path for LLVM/Clang using the flag
