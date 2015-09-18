@@ -1,149 +1,40 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fe50ed4..6eb3b90 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -340,6 +340,10 @@ if(${MAC})
+diff --git a/runtime/CMakeLists.txt b/runtime/CMakeLists.txt
+index 28920ae..2025586 100644
+--- a/runtime/CMakeLists.txt
++++ b/runtime/CMakeLists.txt
+@@ -283,8 +283,18 @@ if(LIBOMP_OMPT_SUPPORT AND (NOT LIBOMP_HAVE_OMPT_SUPPORT))
+   libomp_error_say("OpenMP Tools Interface requested but not available")
  endif()
- set(inc_dir        "${LIBOMP_WORK}/src/include/${omp_version}")
  
-+###############################
-+# Flag to enable OpenMP suport
-+option(TSAN_SUPPORT "Enable ThreadSanitizer support for data race detection in OpenMP programs" OFF)
++# TSAN-support
++set(LIBOMP_TSAN_SUPPORT FALSE CACHE BOOL
++  "TSAN-support?")
 +
- ############################
++set(LIBOMP_TSAN_NAME)
++if(${LIBOMP_TSAN_SUPPORT})
++  add_definitions(-D TSAN_SUPPORT=1 -D DYNAMIC_ANNOTATIONS_ENABLED=1)
++  set(LIBOMP_TSAN_NAME _tsan)
++endif()
++
  # Setting final library name
- set(lib_item "libiomp")
-@@ -359,6 +363,9 @@ set(lib_ext "${dll}")
- # libiomp5.dylib for Mac
- # libiomp5md.dll for Windows
- set(lib_file "${lib_item}${lib_ext}")
-+if(TSAN_SUPPORT)
-+set(lib_file_tsan "${lib_item}_tsan${lib_ext}")
-+endif()
- 
- ########################################
- # Setting export file names (full paths)
-@@ -370,7 +377,7 @@ if(${WINDOWS})
-         set(pdb_file "${lib_file}.pdb") # this is exported if it exists (libiomp5md.dll.pdb)
-     endif()
+-set(LIBOMP_DEFAULT_LIB_NAME libomp)
++set(LIBOMP_DEFAULT_LIB_NAME libomp${LIBOMP_TSAN_NAME})
+ if(${PROFILE_LIBRARY})
+   set(LIBOMP_DEFAULT_LIB_NAME ${LIBOMP_DEFAULT_LIB_NAME}prof)
  endif()
--set(export_lib_files  "${lib_file}" "${imp_file}" "${pdb_file}") 
-+set(export_lib_files  "${lib_file}" "${lib_file_tsan}" "${imp_file}" "${pdb_file}") 
- set(export_inc_files  "iomp_lib.h")
- set(export_mod_files  "omp_lib.mod" "omp_lib_kinds.mod")
- set(export_cmn_files1 "omp.h" "omp_lib.h" "omp_lib.f" "omp_lib.f90")
-@@ -382,7 +389,7 @@ add_prefix("${export_cmn_dir}/include/"        export_cmn_files1)
- add_prefix("${export_cmn_dir}/include_compat/" export_cmn_files2)
- set(export_cmn_files "${export_cmn_files1}" "${export_cmn_files2}")
- if("${export_lib_fat_dir}")
--    set(export_lib_fat_files "${lib_file}" "${imp_file}")
-+    set(export_lib_fat_files "${lib_file}" "${lib_file_tsan}" "${imp_file}")
-     add_prefix("${export_lib_fat_dir}/" export_lib_fat_files)
+@@ -321,6 +331,7 @@ if(${LIBOMP_STANDALONE_BUILD})
+   endif()
+   libomp_say("Use Adaptive locks   -- ${LIBOMP_USE_ADAPTIVE_LOCKS}")
+   libomp_say("Use quad precision   -- ${LIBOMP_USE_QUAD_PRECISION}")
++  libomp_say("Use TSAN-support     -- ${LIBOMP_TSAN_SUPPORT}")
  endif()
  
-@@ -586,6 +593,7 @@ simple_copy_recipe("omp_lib.f"         "${build_dir}"  "${export_cmn_dir}/includ
- simple_copy_recipe("omp_lib.f90"       "${build_dir}"  "${export_cmn_dir}/include")
- simple_copy_recipe("iomp.h"            "${build_dir}"  "${export_cmn_dir}/include_compat")
- simple_copy_recipe("${lib_file}"       "${build_dir}"  "${export_lib_dir}")
-+simple_copy_recipe("${lib_file_tsan}"  "${build_dir}"  "${export_lib_dir}")
- simple_copy_recipe("${imp_file}"       "${build_dir}"  "${export_lib_dir}")
- simple_copy_recipe("${pdb_file}"       "${build_dir}"  "${export_lib_dir}")
- simple_copy_recipe("${dbg_file}"       "${build_dir}"  "${export_lib_dir}")
-@@ -622,6 +630,9 @@ endif()
- 
- # --- ${lib_file} rule ---
- add_library(iomp5 SHARED ${lib_src_files})
-+if(TSAN_SUPPORT)
-+add_library(iomp5_tsan SHARED ${lib_src_files})
-+endif()
- set_target_properties(iomp5 PROPERTIES 
-     PREFIX "" SUFFIX ""          # Take control 
-     OUTPUT_NAME "${lib_file}"    # of output name
-@@ -629,11 +640,27 @@ set_target_properties(iomp5 PROPERTIES
-     LINKER_LANGUAGE C            # use C Compiler for linking step
-     SKIP_BUILD_RPATH true        # have Mac linker -install_name just be "-install_name libiomp5.dylib"
- )
-+if(TSAN_SUPPORT)
-+set_target_properties(iomp5_tsan PROPERTIES 
-+    PREFIX "" SUFFIX ""          # Take control 
-+    OUTPUT_NAME "${lib_file_tsan}"    # of output name
-+    COMPILE_FLAGS "-D DYNAMIC_ANNOTATIONS_ENABLED=1"
-+    LINK_FLAGS  "${LD_FLAGS} -fsanitize=thread"     
-+    LINKER_LANGUAGE C            # use C Compiler for linking step
-+    SKIP_BUILD_RPATH true        # have Mac linker -install_name just be "-install_name libiomp5.dylib"
-+)
-+endif()
- # Target lib (export files) depend on the library (iomp5) being built
- add_dependencies(lib iomp5)
-+if(TSAN_SUPPORT)
-+add_dependencies(lib iomp5_tsan)
-+endif()
- 
- # Linking command will include libraries in LD_LIB_FLAGS
- target_link_libraries(iomp5 ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
-+if(TSAN_SUPPORT)
-+target_link_libraries(iomp5_tsan ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
-+endif()
- 
- # Create *.inc and omp.h before compiling any sources
- add_dependencies(iomp5 needed-headers)
-@@ -737,6 +764,14 @@ if(${WINDOWS})
- endif()
- 
- ######################################################
-+# Install rules
-+install (FILES ${build_dir}/${lib_file} DESTINATION lib)
-+if(TSAN_SUPPORT)
-+install (FILES ${build_dir}/${lib_file_tsan} DESTINATION lib)
-+endif()
-+install (FILES ${build_dir}/iomp.h ${build_dir}/iomp_lib.h ${build_dir}/omp.h ${build_dir}/omp_lib.h DESTINATION include)
-+
-+######################################################
- # kmp_i18n_id.inc and kmp_i18n_default.inc
- set(perlcmd "${PERL_EXECUTABLE}" "${tools_dir}/message-converter.pl" "${oa_opts}" "--prefix=kmp_i18n" "--enum=kmp_i18n_id.inc" "${src_dir}/i18n/en_US.txt")
- add_custom_command(
-@@ -841,6 +876,7 @@ endif()
- say("Build Type           : ${CMAKE_BUILD_TYPE}")
- say("OpenMP Version       : ${omp_version}")
- say("Lib Type             : ${lib_type}")
-+say("Tsan Support         : ${TSAN_SUPPORT}")
- say("Fortran Modules      : ${create_fortran_modules}")
- # will say development if all zeros
- if("${build_number}" STREQUAL "00000000")
-diff --git a/Makefile b/Makefile
-index b90b7d9..e7ed401 100644
---- a/Makefile
-+++ b/Makefile
-@@ -29,6 +29,8 @@
- # </copyright>
- 
- omp_root?=.
-+tsan?=enabled
-+
- include $(omp_root)/tools/common.inc
- .PHONY: default all omp
- 
-@@ -37,12 +39,12 @@ default: omp
- all: omp stubs
- 
- omp: info mkdir
--	@echo $(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) lib inc common -- -j$(jobs)
--	$(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) lib inc common -- -j$(jobs)
-+	@echo $(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) --tsan=$(tsan) lib inc common
-+	$(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) --tsan=$(tsan) lib inc common
- 
- stubs: mkdir
--	@echo $(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) --stubs lib inc common -- -j$(jobs)
--	$(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) --stubs lib inc common -- -j$(jobs)
-+	@echo $(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) --tsan=$(tsan) --stubs lib inc common 
-+	$(omp_root)/tools/build.pl $(build_args) --arch=$(arch) --mode=$(mode) --tsan=$(tsan) --stubs lib inc common
- 
- .PHONY: clean info
- 
-diff --git a/src/dynamic_annotations.h b/src/dynamic_annotations.h
-index e69de29..e595d74 100644
---- a/src/dynamic_annotations.h
-+++ b/src/dynamic_annotations.h
+ add_subdirectory(src)
+diff --git a/runtime/src/dynamic_annotations.h b/runtime/src/dynamic_annotations.h
+new file mode 100644
+index 0000000..e595d74
+--- /dev/null
++++ b/runtime/src/dynamic_annotations.h
 @@ -0,0 +1,661 @@
 +/* Copyright (c) 2011, Google Inc.
 +* All rights reserved.
@@ -806,125 +697,152 @@ index e69de29..e595d74 100644
 +#endif /* DYNAMIC_ANNOTATIONS_ENABLED */
 +
 +#endif /* __DYNAMIC_ANNOTATIONS_H__ */
-diff --git a/src/kmp_barrier.cpp b/src/kmp_barrier.cpp
-index 90efbb9..f44f84b 100644
---- a/src/kmp_barrier.cpp
-+++ b/src/kmp_barrier.cpp
-@@ -55,6 +55,8 @@
- #define ngo_sync()               ((void)0)
- #endif /* KMP_MIC && USE_NGO_STORES */
+diff --git a/runtime/src/kmp_barrier.cpp b/runtime/src/kmp_barrier.cpp
+index c2f26fd..18225bc 100644
+--- a/runtime/src/kmp_barrier.cpp
++++ b/runtime/src/kmp_barrier.cpp
+@@ -23,6 +23,10 @@
+ #define USE_NGO_STORES 1
+ #endif // KMP_MIC
  
++#if TSAN_SUPPORT
 +#include "dynamic_annotations.h"
++#endif
 +
- void __kmp_print_structure(void); // Forward declaration
- 
- // ---------------------------- Barrier Algorithms ----------------------------
-@@ -89,6 +91,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
+ #if KMP_MIC && USE_NGO_STORES
+ // ICV copying
+ #define ngo_load(src)            __m512d Vt = _mm512_load_pd((void *)(src))
+@@ -70,6 +74,9 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
          // Mark arrival to master thread
          /* After performing this write, a worker thread may not assume that the team is valid
             any more - it could be deallocated by the master thread at any time. */
++#if TSAN_SUPPORT
 +	ANNOTATE_HAPPENS_BEFORE(this_thr);
++#endif
          kmp_flag_64 flag(&thr_bar->b_arrived, other_threads[0]);
          flag.release();
      } else {
-@@ -114,6 +117,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
+@@ -95,6 +102,9 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
              kmp_flag_64 flag(&other_threads[i]->th.th_bar[bt].bb.b_arrived, new_state);
              flag.wait(this_thr, FALSE
                        USE_ITT_BUILD_ARG(itt_sync_obj) );
++#if TSAN_SUPPORT
 +	    ANNOTATE_HAPPENS_AFTER(other_threads[ i ]);
++#endif
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
              // Barrier imbalance - write min of the thread time and the other thread time to the thread.
              if (__kmp_forkjoin_frames_mode == 2) {
-@@ -186,6 +190,7 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
+@@ -168,6 +178,9 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
                                &other_threads[i]->th.th_bar[bt].bb.b_go,
                                other_threads[i]->th.th_bar[bt].bb.b_go,
                                other_threads[i]->th.th_bar[bt].bb.b_go + KMP_BARRIER_STATE_BUMP));
++#if TSAN_SUPPORT
 +		ANNOTATE_HAPPENS_BEFORE(other_threads[i]);
++#endif
                  kmp_flag_64 flag(&other_threads[i]->th.th_bar[bt].bb.b_go, other_threads[i]);
                  flag.release();
              }
-@@ -196,6 +201,8 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
+@@ -178,6 +191,9 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
          kmp_flag_64 flag(&thr_bar->b_go, KMP_BARRIER_STATE_BUMP);
          flag.wait(this_thr, TRUE
                    USE_ITT_BUILD_ARG(itt_sync_obj) );
-+        ANNOTATE_HAPPENS_AFTER(this_thr);
-+
++#if TSAN_SUPPORT
++	ANNOTATE_HAPPENS_AFTER(this_thr);
++#endif
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
          if ((__itt_sync_create_ptr && itt_sync_obj == NULL) || KMP_ITT_DEBUG) {
              // In a fork barrier; cannot get the object reliably (or ITTNOTIFY is disabled)
-@@ -279,6 +286,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
+@@ -261,6 +277,9 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
              kmp_flag_64 flag(&child_bar->b_arrived, new_state);
              flag.wait(this_thr, FALSE
                        USE_ITT_BUILD_ARG(itt_sync_obj) );
-+	        ANNOTATE_HAPPENS_AFTER(child_thr);
++#if TSAN_SUPPORT
++	    ANNOTATE_HAPPENS_AFTER(child_thr);
++#endif
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
              // Barrier imbalance - write min of the thread time and a child time to the thread.
              if (__kmp_forkjoin_frames_mode == 2) {
-@@ -310,6 +318,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
+@@ -292,6 +311,9 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
          // Mark arrival to parent thread
          /* After performing this write, a worker thread may not assume that the team is valid
             any more - it could be deallocated by the master thread at any time.  */
-+	    ANNOTATE_HAPPENS_BEFORE(this_thr);
++#if TSAN_SUPPORT
++	ANNOTATE_HAPPENS_BEFORE(this_thr);
++#endif
          kmp_flag_64 flag(&thr_bar->b_arrived, other_threads[parent_tid]);
          flag.release();
      } else {
-@@ -348,6 +357,7 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
+@@ -330,6 +352,9 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
          kmp_flag_64 flag(&thr_bar->b_go, KMP_BARRIER_STATE_BUMP);
          flag.wait(this_thr, TRUE
                    USE_ITT_BUILD_ARG(itt_sync_obj) );
-+	    ANNOTATE_HAPPENS_AFTER(this_thr);
++#if TSAN_SUPPORT
++	ANNOTATE_HAPPENS_AFTER(this_thr);
++#endif
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
          if ((__itt_sync_create_ptr && itt_sync_obj == NULL) || KMP_ITT_DEBUG) {
              // In fork barrier where we could not get the object reliably (or ITTNOTIFY is disabled)
-@@ -415,6 +425,7 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
+@@ -398,6 +423,9 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                            child_tid, &child_bar->b_go, child_bar->b_go,
                            child_bar->b_go + KMP_BARRIER_STATE_BUMP));
              // Release child from barrier
-+	        ANNOTATE_HAPPENS_BEFORE(child_thr);
++#if TSAN_SUPPORT
++	    ANNOTATE_HAPPENS_BEFORE(child_thr);
++#endif
              kmp_flag_64 flag(&child_bar->b_go, child_thr);
              flag.release();
              child++;
-@@ -475,6 +486,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
+@@ -458,6 +486,9 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
              /* After performing this write (in the last iteration of the enclosing for loop),
                 a worker thread may not assume that the team is valid any more - it could be
                 deallocated by the master thread at any time.  */
-+	        ANNOTATE_HAPPENS_BEFORE(this_thr);
++#if TSAN_SUPPORT
++	    ANNOTATE_HAPPENS_BEFORE(this_thr);
++#endif
              p_flag.set_waiter(other_threads[parent_tid]);
  	    p_flag.release();
              break;
-@@ -502,6 +514,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
+@@ -485,6 +516,9 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
              kmp_flag_64 c_flag(&child_bar->b_arrived, new_state);
              c_flag.wait(this_thr, FALSE
                          USE_ITT_BUILD_ARG(itt_sync_obj) );
-+	        ANNOTATE_HAPPENS_AFTER(child_thr);
++#if TSAN_SUPPORT
++	    ANNOTATE_HAPPENS_AFTER(child_thr);
++#endif
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
              // Barrier imbalance - write min of the thread time and a child time to the thread.
              if (__kmp_forkjoin_frames_mode == 2) {
-@@ -572,6 +585,8 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
+@@ -555,6 +589,9 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
          kmp_flag_64 flag(&thr_bar->b_go, KMP_BARRIER_STATE_BUMP);
          flag.wait(this_thr, TRUE
                    USE_ITT_BUILD_ARG(itt_sync_obj) );
-+	   ANNOTATE_HAPPENS_AFTER(this_thr);
-+
++#if TSAN_SUPPORT
++	ANNOTATE_HAPPENS_AFTER(this_thr);
++#endif
  #if USE_ITT_BUILD && USE_ITT_NOTIFY
          if ((__itt_sync_create_ptr && itt_sync_obj == NULL) || KMP_ITT_DEBUG) {
              // In fork barrier where we could not get the object reliably
-@@ -659,6 +674,7 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
+@@ -642,6 +679,9 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
                                child_tid, &child_bar->b_go, child_bar->b_go,
                                child_bar->b_go + KMP_BARRIER_STATE_BUMP));
                  // Release child from barrier
-+		        ANNOTATE_HAPPENS_BEFORE(child_thr);
++#if TSAN_SUPPORT
++		ANNOTATE_HAPPENS_BEFORE(child_thr);
++#endif
                  kmp_flag_64 flag(&child_bar->b_go, child_thr);
                  flag.release();
              }
-@@ -785,9 +801,17 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
+@@ -768,9 +808,21 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                          KA_TRACE(100, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) += T#%d(%d:%d)\n",
                                         gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
                                         team->t.t_id, child_tid));
-+			            ANNOTATE_HAPPENS_AFTER(other_threads[child_tid]);
++#if TSAN_SUPPORT
++			ANNOTATE_HAPPENS_AFTER(other_threads[child_tid]);
++#endif
                          (*reduce)(this_thr->th.th_local.reduce_data, other_threads[child_tid]->th.th_local.reduce_data);
                      }
                  }
++#if TSAN_SUPPORT
 +#ifdef DYN
 +		else{
 +		  for (child_tid=tid+1; child_tid<=tid+thr_bar->leaf_kids; ++child_tid) {
@@ -932,444 +850,451 @@ index 90efbb9..f44f84b 100644
 +		  }
 +                }
 +#endif
++#endif
                  (void) KMP_TEST_THEN_AND64((volatile kmp_int64 *)&thr_bar->b_arrived, ~(thr_bar->leaf_state)); // clear leaf_state bits
              }
              // Next, wait for higher level children on each child's b_arrived flag
-@@ -804,6 +828,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
+@@ -787,6 +839,9 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                      kmp_flag_64 flag(&child_bar->b_arrived, new_state);
                      flag.wait(this_thr, FALSE
                                USE_ITT_BUILD_ARG(itt_sync_obj) );
-+		            ANNOTATE_HAPPENS_AFTER(child_thr);
++#if TSAN_SUPPORT
++		    ANNOTATE_HAPPENS_AFTER(child_thr);
++#endif
                      if (reduce) {
                          KA_TRACE(100, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) += T#%d(%d:%d)\n",
                                         gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
-@@ -827,6 +852,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
+@@ -810,6 +865,9 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                      kmp_flag_64 flag(&child_bar->b_arrived, new_state);
                      flag.wait(this_thr, FALSE
                                USE_ITT_BUILD_ARG(itt_sync_obj) );
-+		            ANNOTATE_HAPPENS_AFTER(child_thr);
++#if TSAN_SUPPORT
++		    ANNOTATE_HAPPENS_AFTER(child_thr);
++#endif
                      if (reduce) {
                          KA_TRACE(100, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) += T#%d(%d:%d)\n",
                                         gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
-@@ -848,6 +874,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
+@@ -831,6 +889,9 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
             the team is valid any more - it could be deallocated by the master thread at any time. */
          if (thr_bar->my_level || __kmp_dflt_blocktime != KMP_MAX_BLOCKTIME
              || !thr_bar->use_oncore_barrier) { // Parent is waiting on my b_arrived flag; release it
-+	        ANNOTATE_HAPPENS_BEFORE(this_thr);
++#if TSAN_SUPPORT
++	  ANNOTATE_HAPPENS_BEFORE(this_thr);
++#endif
              kmp_flag_64 flag(&thr_bar->b_arrived, other_threads[thr_bar->parent_tid]);
              flag.release();
          }
-@@ -893,6 +920,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
+@@ -876,6 +937,9 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
              kmp_flag_64 flag(&thr_bar->b_go, KMP_BARRIER_STATE_BUMP);
              flag.wait(this_thr, TRUE
                        USE_ITT_BUILD_ARG(itt_sync_obj) );
-+	        ANNOTATE_HAPPENS_AFTER(this_thr);
++#if TSAN_SUPPORT
++	    ANNOTATE_HAPPENS_AFTER(this_thr);
++#endif
              TCW_8(thr_bar->b_go, KMP_INIT_BARRIER_STATE); // Reset my b_go flag for next time
          }
          else { // Thread barrier data is initialized, this is a leaf, blocktime is infinite, not nested
-@@ -1007,6 +1035,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
+@@ -991,6 +1055,9 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
                                        team->t.t_id, child_tid, &child_bar->b_go, child_bar->b_go,
                                        child_bar->b_go + KMP_BARRIER_STATE_BUMP));
                          // Release child using child's b_go flag
-+			            ANNOTATE_HAPPENS_BEFORE(child_thr);
++#if TSAN_SUPPORT
++			ANNOTATE_HAPPENS_BEFORE(child_thr);
++#endif
                          kmp_flag_64 flag(&child_bar->b_go, child_thr);
                          flag.release();
                      }
-@@ -1030,6 +1059,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
+@@ -1014,6 +1081,9 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
                                    team->t.t_id, child_tid, &child_bar->b_go, child_bar->b_go,
                                    child_bar->b_go + KMP_BARRIER_STATE_BUMP));
                      // Release child using child's b_go flag
-+		            ANNOTATE_HAPPENS_BEFORE(child_thr);
++#if TSAN_SUPPORT
++		    ANNOTATE_HAPPENS_BEFORE(child_thr);
++#endif
                      kmp_flag_64 flag(&child_bar->b_go, child_thr);
                      flag.release();
                  }
-diff --git a/src/kmp_lock.cpp b/src/kmp_lock.cpp
-index a7d5506..7e627f0 100644
---- a/src/kmp_lock.cpp
-+++ b/src/kmp_lock.cpp
-@@ -40,6 +40,8 @@
+diff --git a/runtime/src/kmp_lock.cpp b/runtime/src/kmp_lock.cpp
+index 21c87e6..0f9ebd9 100644
+--- a/runtime/src/kmp_lock.cpp
++++ b/runtime/src/kmp_lock.cpp
+@@ -21,6 +21,10 @@
  #include "kmp_lock.h"
  #include "kmp_io.h"
  
++#if TSAN_SUPPORT
 +#include "dynamic_annotations.h"
++#endif
 +
  #if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
  # include <unistd.h>
  # include <sys/syscall.h>
-@@ -152,6 +154,7 @@ void
+@@ -133,6 +137,9 @@ void
  __kmp_acquire_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
  {
      __kmp_acquire_tas_lock_timed_template( lck, gtid );
++#if TSAN_SUPPORT
 +    ANNOTATE_TAS_ACQUIRED(lck);
++#endif
  }
  
  static void
-@@ -196,6 +199,7 @@ __kmp_release_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
+@@ -177,6 +184,9 @@ __kmp_release_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
      KMP_MB();       /* Flush all pending memory write invalidates.  */
  
      KMP_FSYNC_RELEASING(lck);
++#if TSAN_SUPPORT
 +    ANNOTATE_TAS_RELEASED(lck);
++#endif
      KMP_ST_REL32( &(lck->lk.poll), DYNA_LOCK_FREE(tas) );
      KMP_MB();       /* Flush all pending memory write invalidates.  */
  
-@@ -269,6 +273,7 @@ __kmp_acquire_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
+@@ -251,6 +261,9 @@ __kmp_acquire_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_tas_lock_timed_template( lck, gtid );
-+        ANNOTATE_TAS_ACQUIRED(lck);
++#if TSAN_SUPPORT
++	ANNOTATE_TAS_ACQUIRED(lck);
++#endif
          lck->lk.depth_locked = 1;
      }
  }
-@@ -479,6 +484,7 @@ void
+@@ -463,6 +476,9 @@ void
  __kmp_acquire_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
  {
      __kmp_acquire_futex_lock_timed_template( lck, gtid );
++#if TSAN_SUPPORT
 +    ANNOTATE_FUTEX_ACQUIRED(lck);
++#endif
  }
  
  static void
-@@ -525,6 +531,7 @@ __kmp_release_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
+@@ -509,6 +525,9 @@ __kmp_release_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
        lck, lck->lk.poll, gtid ) );
  
      KMP_FSYNC_RELEASING(lck);
++#if TSAN_SUPPORT
 +    ANNOTATE_FUTEX_RELEASED(lck);
++#endif
  
      kmp_int32 poll_val = KMP_XCHG_FIXED32( & ( lck->lk.poll ), DYNA_LOCK_FREE(futex) );
  
-@@ -612,6 +619,7 @@ __kmp_acquire_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
+@@ -597,6 +616,9 @@ __kmp_acquire_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_futex_lock_timed_template( lck, gtid );
++#if TSAN_SUPPORT
 +	ANNOTATE_FUTEX_ACQUIRED(lck);
++#endif
          lck->lk.depth_locked = 1;
      }
  }
-@@ -773,6 +781,7 @@ void
+@@ -760,6 +782,9 @@ void
  __kmp_acquire_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
  {
      __kmp_acquire_ticket_lock_timed_template( lck, gtid );
++#if TSAN_SUPPORT
 +    ANNOTATE_TICKET_ACQUIRED(lck);
++#endif
  }
  
  static void
-@@ -836,6 +845,7 @@ __kmp_release_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
+@@ -823,6 +848,9 @@ __kmp_release_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
      KMP_MB();       /* Flush all pending memory write invalidates.  */
  
      KMP_FSYNC_RELEASING(lck);
++#if TSAN_SUPPORT
 +    ANNOTATE_TICKET_RELEASED(lck);
++#endif
      distance = ( TCR_4( lck->lk.next_ticket ) - TCR_4( lck->lk.now_serving ) );
  
      KMP_ST_REL32( &(lck->lk.now_serving), lck->lk.now_serving + 1 );
-@@ -927,6 +937,7 @@ __kmp_acquire_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
+@@ -915,6 +943,9 @@ __kmp_acquire_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_ticket_lock_timed_template( lck, gtid );
-+        ANNOTATE_TICKET_ACQUIRED(lck);
++#if TSAN_SUPPORT
++	ANNOTATE_TICKET_ACQUIRED(lck);
++#endif
          KMP_MB();
          lck->lk.depth_locked = 1;
          KMP_MB();
-@@ -1379,6 +1390,7 @@ __kmp_acquire_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+@@ -1400,6 +1431,9 @@ __kmp_acquire_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
      KMP_DEBUG_ASSERT( gtid >= 0 );
  
      __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
++#if TSAN_SUPPORT
 +    ANNOTATE_QUEUING_ACQUIRED(lck);
++#endif
  }
  
  static void
-@@ -1427,6 +1439,7 @@ __kmp_test_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+@@ -1448,6 +1482,9 @@ __kmp_test_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
          if ( KMP_COMPARE_AND_STORE_ACQ32( head_id_p, 0, -1 ) ) {
              KA_TRACE( 1000, ("__kmp_test_queuing_lock: T#%d exiting: holding lock\n", gtid ));
              KMP_FSYNC_ACQUIRED(lck);
-+            ANNOTATE_QUEUING_ACQUIRED(lck);
++#if TSAN_SUPPORT
++	    ANNOTATE_QUEUING_ACQUIRED(lck);
++#endif
              return TRUE;
          }
      }
-@@ -1477,6 +1490,7 @@ __kmp_release_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+@@ -1498,6 +1535,9 @@ __kmp_release_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
      KMP_DEBUG_ASSERT( this_thr->th.th_next_waiting == 0 );
  
      KMP_FSYNC_RELEASING(lck);
++#if TSAN_SUPPORT
 +    ANNOTATE_QUEUING_RELEASED(lck);
++#endif
  
      while( 1 ) {
          kmp_int32 dequeued;
-@@ -1674,6 +1688,7 @@ __kmp_acquire_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+@@ -1701,6 +1741,9 @@ __kmp_acquire_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
++#if TSAN_SUPPORT
 +	ANNOTATE_QUEUING_ACQUIRED(lck);
++#endif
          KMP_MB();
          lck->lk.depth_locked = 1;
          KMP_MB();
-@@ -2313,6 +2328,7 @@ __kmp_acquire_adaptive_lock( kmp_adaptive_lock_t * lck, kmp_int32 gtid )
+@@ -2342,6 +2385,9 @@ __kmp_acquire_adaptive_lock( kmp_adaptive_lock_t * lck, kmp_int32 gtid )
      __kmp_acquire_queuing_lock_timed_template<FALSE>( GET_QLK_PTR(lck), gtid );
      // We have acquired the base lock, so count that.
      KMP_INC_STAT(lck,nonSpeculativeAcquires );
++#if TSAN_SUPPORT
 +    ANNOTATE_QUEUING_ACQUIRED(lck);
++#endif
  }
  
  static void
-@@ -2598,6 +2614,7 @@ void
+@@ -2629,6 +2675,9 @@ void
  __kmp_acquire_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
  {
      __kmp_acquire_drdpa_lock_timed_template( lck, gtid );
++#if TSAN_SUPPORT
 +    ANNOTATE_DRDPA_ACQUIRED(lck);
++#endif
  }
  
  static void
-@@ -2690,6 +2707,7 @@ __kmp_release_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
+@@ -2721,6 +2770,9 @@ __kmp_release_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
      KA_TRACE(1000, ("__kmp_release_drdpa_lock: ticket #%lld released lock %p\n",
         ticket - 1, lck));
      KMP_FSYNC_RELEASING(lck);
++#if TSAN_SUPPORT
 +    ANNOTATE_DRDPA_RELEASED(lck);
++#endif
      KMP_ST_REL64(&(polls[ticket & mask].poll), ticket); // volatile store
+     return KMP_LOCK_RELEASED;
  }
- 
-@@ -2793,6 +2811,7 @@ __kmp_acquire_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
+@@ -2825,6 +2877,9 @@ __kmp_acquire_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
      }
      else {
          __kmp_acquire_drdpa_lock_timed_template( lck, gtid );
-+        ANNOTATE_DRDPA_ACQUIRED(lck);
++#if TSAN_SUPPORT
++	ANNOTATE_DRDPA_ACQUIRED(lck);
++#endif
          KMP_MB();
          lck->lk.depth_locked = 1;
          KMP_MB();
-@@ -3904,12 +3923,15 @@ __kmp_user_lock_allocate( void **user_lock, kmp_int32 gtid,
+@@ -3937,12 +3992,20 @@ __kmp_user_lock_allocate( void **user_lock, kmp_int32 gtid,
  
      if ( __kmp_lock_pool == NULL ) {
          // Lock pool is empty. Allocate new memory.
-+        /* ANNOTATION: Found no good way to express the syncronisation between allocation and usage, so ignore the allocation */
++#if TSAN_SUPPORT
++        // ANNOTATION: Found no good way to express the syncronisation
++        // between allocation and usage, so ignore the allocation
 +        ANNOTATE_IGNORE_WRITES_BEGIN();
++#endif
          if ( __kmp_num_locks_in_block <= 1 ) { // Tune this cutoff point.
              lck = (kmp_user_lock_p) __kmp_allocate( __kmp_user_lock_size );
          }
          else {
              lck = __kmp_lock_block_allocate();
          }
-+        ANNOTATE_IGNORE_WRITES_END();
++#if TSAN_SUPPORT
++	ANNOTATE_IGNORE_WRITES_END();
++#endif
  
          // Insert lock in the table so that it can be freed in __kmp_cleanup,
          // and debugger has info on all allocated locks.
-diff --git a/src/kmp_runtime.c b/src/kmp_runtime.c
-index 4063523..b493497 100644
---- a/src/kmp_runtime.c
-+++ b/src/kmp_runtime.c
-@@ -53,6 +53,7 @@
+diff --git a/runtime/src/kmp_runtime.c b/runtime/src/kmp_runtime.c
+index 10caaaf..621bb1e 100644
+--- a/runtime/src/kmp_runtime.c
++++ b/runtime/src/kmp_runtime.c
+@@ -38,6 +38,9 @@
  #include <process.h>
  #endif
  
++#if TSAN_SUPPORT
 +#include "dynamic_annotations.h"
++#endif
  
  #if defined(KMP_GOMP_COMPAT)
  char const __kmp_version_alt_comp[] = KMP_VERSION_PREFIX "alternative compiler support: yes";
-@@ -5333,6 +5334,7 @@ __kmp_reap_thread(
+@@ -5750,6 +5753,9 @@ __kmp_reap_thread(
              /* Assume the threads are at the fork barrier here */
              KA_TRACE( 20, ("__kmp_reap_thread: releasing T#%d from fork barrier for reap\n", gtid ) );
              /* Need release fence here to prevent seg faults for tree forkjoin barrier (GEH) */
++#if TSAN_SUPPORT
 +	    ANNOTATE_HAPPENS_BEFORE(thread);
++#endif
              kmp_flag_64 flag(&thread->th.th_bar[ bs_forkjoin_barrier ].bb.b_go, thread);
              __kmp_release_64(&flag);
          }; // if
-diff --git a/src/kmp_tasking.c b/src/kmp_tasking.c
-index c209b40..2ebc1d9 100644
---- a/src/kmp_tasking.c
-+++ b/src/kmp_tasking.c
-@@ -37,7 +37,7 @@
- #include "kmp_itt.h"
- #include "kmp_wait_release.h"
+diff --git a/runtime/src/kmp_tasking.c b/runtime/src/kmp_tasking.c
+index 647f241..785ce85 100644
+--- a/runtime/src/kmp_tasking.c
++++ b/runtime/src/kmp_tasking.c
+@@ -23,6 +23,9 @@
+ #include "ompt-specific.h"
+ #endif
  
--
++#if TSAN_SUPPORT
 +#include "dynamic_annotations.h"
++#endif
  
  /* ------------------------------------------------------------------------ */
  /* ------------------------------------------------------------------------ */
-@@ -537,6 +537,7 @@ __kmp_free_task( kmp_int32 gtid, kmp_taskdata_t * taskdata, kmp_info_t * thread
+@@ -534,6 +537,9 @@ __kmp_free_task( kmp_int32 gtid, kmp_taskdata_t * taskdata, kmp_info_t * thread
      KMP_DEBUG_ASSERT( TCR_4(taskdata->td_incomplete_child_tasks) == 0 );
  
      taskdata->td_flags.freed = 1;
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_BEFORE(taskdata);
++#endif
      // deallocate the taskdata and shared variable blocks associated with this task
      #if USE_FAST_MEMORY
          __kmp_fast_free( thread, taskdata );
-@@ -901,6 +902,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
+@@ -933,6 +939,9 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
      #else /* ! USE_FAST_MEMORY */
      taskdata = (kmp_taskdata_t *) __kmp_thread_malloc( thread, shareds_offset + sizeof_shareds );
      #endif /* USE_FAST_MEMORY */
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_AFTER(taskdata);
++#endif
  
      task                      = KMP_TASKDATA_TO_TASK(taskdata);
  
-@@ -999,6 +1001,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
+@@ -1029,6 +1038,9 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
+ 
      KA_TRACE(20, ("__kmp_task_alloc(exit): T#%d created task %p parent=%p\n",
                    gtid, taskdata, taskdata->td_parent) );
- 
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_BEFORE(task);
-     return task;
- }
++#endif
  
-@@ -1070,6 +1073,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
+ #if OMPT_SUPPORT
+     if (ompt_status & ompt_status_track) {
+@@ -1113,6 +1125,9 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
      // Proxy tasks are not handled by the runtime
      if ( taskdata->td_flags.proxy != TASK_PROXY )
  #endif
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_AFTER(task);
++#endif
      __kmp_task_start( gtid, task, current_task );
  
- #if OMP_40_ENABLED
-@@ -1109,6 +1113,8 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
+ #if OMPT_SUPPORT
+@@ -1176,6 +1191,9 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
      // Proxy tasks are not handled by the runtime
      if ( taskdata->td_flags.proxy != TASK_PROXY )
  #endif
-+
-+       ANNOTATE_HAPPENS_BEFORE(taskdata->td_parent);
++#if TSAN_SUPPORT
++      ANNOTATE_HAPPENS_BEFORE(taskdata->td_parent);
++#endif
         __kmp_task_finish( gtid, task, current_task );
  
      KA_TRACE(30, ("__kmp_invoke_task(exit): T#%d completed task %p, resuming task %p\n",
-@@ -1148,6 +1154,7 @@ __kmpc_omp_task_parts( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task)
+@@ -1215,6 +1233,9 @@ __kmpc_omp_task_parts( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task)
                    "loc=%p task=%p, return: TASK_CURRENT_NOT_QUEUED\n", gtid, loc_ref,
                    new_taskdata ) );
  
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_BEFORE(new_task);
++#endif
      return TASK_CURRENT_NOT_QUEUED;
  }
  
-@@ -1179,7 +1186,7 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate
-         __kmp_invoke_task( gtid, new_task, current_task );
+@@ -1259,6 +1280,9 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate
      }
+ #endif
  
--
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_BEFORE(new_task);
++#endif
      return TASK_CURRENT_NOT_QUEUED;
  }
  
-@@ -1266,6 +1273,7 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
+@@ -1347,6 +1371,9 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
      KA_TRACE(10, ("__kmpc_omp_taskwait(exit): T#%d task %p finished waiting, "
                    "returning TASK_CURRENT_NOT_QUEUED\n", gtid, taskdata) );
  
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_AFTER(taskdata);
++#endif
      return TASK_CURRENT_NOT_QUEUED;
  }
  
-@@ -1393,6 +1401,7 @@ __kmpc_end_taskgroup( ident_t* loc, int gtid )
+@@ -1476,6 +1503,9 @@ __kmpc_end_taskgroup( ident_t* loc, int gtid )
      __kmp_thread_free( thread, taskgroup );
  
      KA_TRACE(10, ("__kmpc_end_taskgroup(exit): T#%d task %p finished waiting\n", gtid, taskdata) );
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_AFTER(taskdata);
++#endif
  }
  #endif
  
-@@ -2157,8 +2166,10 @@ __kmp_realloc_task_threads_data( kmp_info_t *thread, kmp_task_team_t *task_team
+@@ -2247,8 +2277,14 @@ __kmp_realloc_task_threads_data( kmp_info_t *thread, kmp_task_team_t *task_team
                  // Make the initial allocate for threads_data array, and zero entries
                  // Cannot use __kmp_thread_calloc() because threads not around for
                  // kmp_reap_task_team( ).
-+                ANNOTATE_IGNORE_WRITES_BEGIN();
++#if TSAN_SUPPORT
++		ANNOTATE_IGNORE_WRITES_BEGIN();
++#endif
                  *threads_data_p = (kmp_thread_data_t *)
                                    __kmp_allocate( nthreads * sizeof(kmp_thread_data_t) );
-+                ANNOTATE_IGNORE_WRITES_END();
++#if TSAN_SUPPORT
++		ANNOTATE_IGNORE_WRITES_END();
++#endif
  #ifdef BUILD_TIED_TASK_STACK
                  // GEH: Figure out if this is the right thing to do
                  for (i = 0; i < nthreads; i++) {
-diff --git a/src/makefile.mk b/src/makefile.mk
-index 0545f7c..e127113 100644
---- a/src/makefile.mk
-+++ b/src/makefile.mk
-@@ -113,6 +113,7 @@ define curr_config
-     CXXFLAGS=$(subst $(space),_,$(CXXFLAGS))
-     FFLAGS=$(subst $(space),_,$(FFLAGS))
-     LDFLAGS=$(subst $(space),_,$(LDFLAGS))
-+    TSAN=$(tsan)
- endef
- # And check it.
- include $(tools_dir)src/common-checks.mk
-@@ -712,6 +713,9 @@ ld-flags   += $(LDFLAGS)
- # --------------------------------------------------------------------------------------------------
- # Files.
- # --------------------------------------------------------------------------------------------------
-+ifeq "$(tsan)" "enabled"
-+  cpp-flags += -D DYNAMIC_ANNOTATIONS_ENABLED=1
-+endif
+diff --git a/runtime/src/z_Linux_util.c b/runtime/src/z_Linux_util.c
+index c419edb..aedb243 100644
+--- a/runtime/src/z_Linux_util.c
++++ b/runtime/src/z_Linux_util.c
+@@ -60,6 +60,10 @@
+ #include <ctype.h>
+ #include <fcntl.h>
  
- # Library files. These files participate in all kinds of library.
- lib_c_items :=      \
-@@ -844,6 +848,9 @@ else
-             _lib_item += mt
-         endif
-     endif
-+    ifeq "$(tsan)" "enabled"
-+	_lib_item += _tsan
-+    endif
- endif
- # _lib_item is a list of space separated name parts. Remove spaces to form final name.
- lib_item = $(subst $(space),,$(_lib_item))
-@@ -1342,12 +1349,16 @@ ifneq "$(arch)" "mic"
-             endif
-         else # lin
-             ifeq "$(std_cpp_lib)" "1"
--                tt-c        = g++
-+                tt-c        = $(cxx)
-             else
--                tt-c        = gcc
-+                tt-c        = $(c)
-             endif
-             # GCC on OS X* does not recognize -pthread.
-             tt-c-flags  += -pthread
-+            ifeq "$(tsan)" "enabled"
-+                tt-c-flags  += -fsanitize=thread
-+            endif
-+
-         endif
-         tt-c-flags += -o $(tt-exe-file)
-         ifneq "$(filter 32 32e 64,$(arch))" ""
-diff --git a/src/z_Linux_util.c b/src/z_Linux_util.c
-index 30d471d..7d1d535 100644
---- a/src/z_Linux_util.c
-+++ b/src/z_Linux_util.c
-@@ -51,6 +51,8 @@
- #include <sys/resource.h>
- #include <sys/syscall.h>
- 
++#if TSAN_SUPPORT
 +#include "dynamic_annotations.h"
++#endif
 +
- #if KMP_OS_LINUX && !KMP_OS_CNK
- # include <sys/sysinfo.h>
- # if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
-@@ -1667,6 +1669,7 @@ __kmp_suspend_initialize( void )
+ /* ------------------------------------------------------------------------ */
+ /* ------------------------------------------------------------------------ */
+ 
+@@ -1646,6 +1650,9 @@ __kmp_suspend_initialize( void )
  static void
  __kmp_suspend_initialize_thread( kmp_info_t *th )
  {
++#if TSAN_SUPPORT
 +    ANNOTATE_HAPPENS_AFTER(&th->th.th_suspend_init_count);
++#endif    
      if ( th->th.th_suspend_init_count <= __kmp_fork_count ) {
          /* this means we haven't initialized the suspension pthread objects for this thread
             in this instance of the process */
-@@ -1676,6 +1679,7 @@ __kmp_suspend_initialize_thread( kmp_info_t *th )
+@@ -1655,6 +1662,9 @@ __kmp_suspend_initialize_thread( kmp_info_t *th )
          status = pthread_mutex_init( &th->th.th_suspend_mx.m_mutex, & __kmp_suspend_mutex_attr );
          KMP_CHECK_SYSFAIL( "pthread_mutex_init", status );
          *(volatile int*)&th->th.th_suspend_init_count = __kmp_fork_count + 1;
++#if TSAN_SUPPORT
 +        ANNOTATE_HAPPENS_BEFORE(&th->th.th_suspend_init_count);
++#endif
      };
  }
  
-diff --git a/tools/build.pl b/tools/build.pl
-index 82e159c..10974b7 100755
---- a/tools/build.pl
-+++ b/tools/build.pl
-@@ -84,12 +84,13 @@ my $opts = {
-     "omp-version"     => { targets => "rtl",               base => 0, parms => { 40      => "", 30        => "", 41 => "*"    }, suffix => sub { $_[ 0 ];                       } },
-     "coverage"        => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "c1" : "c0"; } },
-     "stats"           => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "s1" : "s0"; } },
-+    "tsan"    => { targets => "rtl",         base => 0, parms => { enabled => "", disabled => "*"               }, suffix => sub { "" } },
- };
- my $synonyms = {
-     "debug" => [ qw{ dbg debg } ],
- };
- # This array specifies order of options to process, so it cannot be initialized with keys( %$opts ).
--my @all_opts   = qw{ target version lib-type link-type mode omp-version coverage stats };
-+my @all_opts   = qw{ target version lib-type link-type mode omp-version coverage stats tsan};
- # This is the list of base options.
- my @base_opts  = grep( $opts->{ $_ }->{ base } == 1, @all_opts );
- # This is the list of extra options.
-@@ -290,6 +291,7 @@ sub enqueue_jobs($$@) {
-                     "VERSION=" . $set->{ version },
-                     "suffix=" . $suf,
-                     "stats=" . $set->{ stats },
-+		    "tsan=" . $set->{ "tsan" },
-                     @goals,
-                 ],
-                 build_dir  => $build_dir
